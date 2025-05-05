@@ -1,0 +1,56 @@
+<template>
+  <div class="forgot-password-page">
+    <div class="centered-container">
+      <div class="content-wrapper">
+        <AppHeader />
+        <ForgotPasswordForm />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import AppHeader from '@/components/layout/AppHeader.vue';
+import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm.vue';
+
+export default {
+  name: "ForgotPasswordPage",
+  components: {
+    AppHeader,
+    ForgotPasswordForm
+  }
+};
+</script>
+
+<style scoped>
+.forgot-password-page {
+  background-color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: "JetBrains Mono", Helvetica;
+  padding: 20px;
+}
+
+.centered-container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  justify-content: center;
+}
+
+.content-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+}
+
+@media (max-width: 480px) {
+  .content-wrapper {
+    gap: 30px;
+  }
+}
+</style> 

@@ -4,45 +4,36 @@ import store from '@/store';
 
 const API_URL = process.env.VUE_APP_API_URL || 'http://109.120.157.120:8000/v1';
 
-// Create axios instance
+console.log('API URL:', API_URL);
+
+// Create axios instance with timeout
 const axiosInstance = axios.create({
-  baseURL: API_URL
+  baseURL: API_URL,
+  timeout: 30000, // 30 seconds timeout
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  }
 });
 
-// Add request interceptor
+// Add request interceptor to add auth token
 axiosInstance.interceptors.request.use(
-  async (config) => {
+  config => {
     const accessToken = store.getters['auth/accessToken'];
-    
     if (accessToken) {
-      // Check if token is expired
-      if (isTokenExpired(accessToken)) {
-        try {
-          // Try to refresh the token
-          await store.dispatch('auth/refreshToken');
-        } catch (error) {
-          // If refresh fails, redirect to login
-          store.dispatch('auth/logout');
-          window.location.href = '/';
-          return Promise.reject(error);
-        }
-      }
-      
-      // Add token to request headers
-      config.headers.Authorization = `Bearer ${store.getters['auth/accessToken']}`;
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
-    
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor
+// Add response interceptor to handle token refresh
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     const originalRequest = error.config;
     
     // If error is 401 and we haven't tried to refresh token yet
@@ -50,16 +41,16 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        // Try to refresh the token
+        // Try to refresh token
         await store.dispatch('auth/refreshToken');
         
         // Retry the original request with new token
-        originalRequest.headers.Authorization = `Bearer ${store.getters['auth/accessToken']}`;
+        const accessToken = store.getters['auth/accessToken'];
+        originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, logout and redirect to login
+        // If refresh fails, logout user
         store.dispatch('auth/logout');
-        window.location.href = '/';
         return Promise.reject(refreshError);
       }
     }
@@ -69,16 +60,66 @@ axiosInstance.interceptors.response.use(
 );
 
 class AuthService {
+  async checkAndRefreshToken() {
+    const accessToken = store.getters['auth/accessToken'];
+    console.log('Checking token:', { hasAccessToken: !!accessToken });
+    
+    if (accessToken && isTokenExpired(accessToken)) {
+      console.log('Token is expired, attempting refresh');
+      try {
+        await store.dispatch('auth/refreshToken');
+        console.log('Token refresh successful');
+        return true;
+      } catch (error) {
+        console.error('Token refresh failed:', error);
+        store.dispatch('auth/logout');
+        return false;
+      }
+    }
+    return true;
+  }
+
   async login(credentials) {
+    console.log('AuthService.login called:', { credentials });
     try {
-      const response = await axiosInstance.post('/users/tokens/', credentials);
+      // Use exact format from API documentation
+      const loginData = {
+        username: credentials.username,
+        password: credentials.password
+      };
+      console.log('Sending login request with data:', loginData);
+      
+      const response = await axiosInstance.post('/users/tokens/', loginData);
+      console.log('Login response:', response.data);
       return {
         access: response.data.access,
         refresh: response.data.refresh,
         user: response.data.user
       };
     } catch (error) {
+      console.error('Login error in service:', {
+        error,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+        request: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers,
+          data: error.config?.data
+        }
+      });
       throw this.handleError(error);
+    }
+  }
+
+  async getCsrfToken() {
+    try {
+      const response = await axiosInstance.get('/users/csrf/');
+      return response.data.csrfToken;
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error);
+      throw error;
     }
   }
 
@@ -107,19 +148,58 @@ class AuthService {
       });
       return {
         access: response.data.access,
-        refresh: response.data.refresh
+        refresh: response.data.refresh,
+        user: response.data.user
       };
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
+  async getPatients() {
+    try {
+      const response = await axiosInstance.get('/treatments/patients/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+
+  async createPatient(patientData) {
+    try {
+      const response = await axiosInstance.post('/treatments/patients/', patientData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   handleError(error) {
+    console.log('Handling error:', {
+      code: error.code,
+      message: error.message,
+      response: error.response,
+      request: error.request,
+      data: error.response?.data
+    });
+
+    if (error.code === 'ECONNABORTED') {
+      return {
+        message: 'Превышено время ожидания ответа от сервера',
+        status: 0
+      };
+    }
+    
     if (error.response) {
       // The request was made and the server responded with a status code
       // that falls out of the range of 2xx
+      const message = error.response.data?.message || 
+                     error.response.data?.detail || 
+                     error.response.data?.error ||
+                     'Произошла ошибка при выполнении запроса';
       return {
-        message: error.response.data.message || 'Произошла ошибка при выполнении запроса',
+        message,
         status: error.response.status
       };
     } else if (error.request) {
@@ -131,11 +211,11 @@ class AuthService {
     } else {
       // Something happened in setting up the request that triggered an Error
       return {
-        message: 'Произошла ошибка при отправке запроса',
+        message: error.message || 'Произошла ошибка при отправке запроса',
         status: -1
       };
     }
   }
 }
 
-export default new AuthService(); 
+export default new AuthService();

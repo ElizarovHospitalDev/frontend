@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import LoginPage from '@/views/LoginPage.vue';
 import ForgotPasswordPage from '@/views/ForgotPasswordPage.vue';
-import DashboardPage from '@/views/DashboardPage.vue';
+import PatientPage from '@/views/PatientPage.vue';
 import AddPatientPage from '@/views/AddPatientPage.vue';
+import PatientDetailPage from '@/views/PatientDetailPage.vue';
 
 const routes = [
   {
@@ -16,9 +17,9 @@ const routes = [
     component: ForgotPasswordPage
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: DashboardPage,
+    path: '/patients',
+    name: 'Patients', 
+    component: PatientPage,
     meta: { requiresAuth: true }
   },
   {
@@ -26,6 +27,13 @@ const routes = [
     name: 'AddPatient',
     component: AddPatientPage,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/patients/:id',
+    name: 'PatientDetail',
+    component: PatientDetailPage,
+    meta: { requiresAuth: true },
+    props: true
   }
 ];
 
@@ -43,7 +51,11 @@ router.beforeEach((to, from, next) => {
       next();
     }
   } else {
-    next();
+    if (isAuthenticated && to.path === '/') {
+      next({ path: '/patients' });
+    } else {
+      next();
+    }
   }
 });
 

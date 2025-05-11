@@ -143,7 +143,7 @@ export default {
   },
   methods: {
     goBack() {
-      this.$router.push('/dashboard');
+      this.$router.push('/patients');
     },
     formatPhoneNumber(value) {
       // Удаляем все нецифровые символы
@@ -205,7 +205,8 @@ export default {
         };
         
         await authService.createPatient(patientData);
-        this.$router.push('/dashboard');
+        // Обновляем перенаправление на страницу пациентов
+        this.$router.push('/patients');
       } catch (error) {
         console.error('Error creating patient:', error);
         if (error.response?.data) {
@@ -369,4 +370,4 @@ export default {
 .form-group textarea.error {
   border-color: #c62828;
 }
-</style> 
+</style>

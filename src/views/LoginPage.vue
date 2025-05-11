@@ -66,7 +66,8 @@ export default {
         ]);
         
         console.log('Login successful:', result);
-        this.$router.push('/dashboard');
+        // Обновляем путь с /dashboard на /patients
+        this.$router.push('/patients');
       } catch (error) {
         console.error('Login error details:', {
           error,
@@ -126,4 +127,4 @@ export default {
     gap: 30px;
   }
 }
-</style> 
+</style>

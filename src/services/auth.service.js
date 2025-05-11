@@ -175,6 +175,39 @@ class AuthService {
     }
   }
 
+  async updatePatient(id, patientData) {
+    try {
+      console.log(`Making PUT request to /treatments/patients/${id}/`);
+      console.log('Request data:', patientData);
+      
+      // Make sure we're sending the exact format the API expects
+      const cleanedData = {
+        first_name: patientData.first_name,
+        last_name: patientData.last_name,
+        middle_name: patientData.middle_name,
+        birthday: patientData.birthday,
+        mobile_phone: patientData.mobile_phone,
+        // Convert 'F' to 'W' for female gender
+        sex: patientData.sex === 'F' ? 'W' : patientData.sex,
+        address: patientData.address
+      };
+      
+      console.log('Cleaned data being sent:', cleanedData);
+      
+      const response = await axiosInstance.put(`/treatments/patients/${id}/`, cleanedData);
+      console.log('Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in updatePatient:', error);
+      if (error.response) {
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        console.error('Response headers:', error.response.headers);
+      }
+      throw this.handleError(error);
+    }
+  }
+
   handleError(error) {
     console.log('Handling error:', {
       code: error.code,

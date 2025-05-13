@@ -44,13 +44,13 @@ export default {
   gap: 30px;
   max-width: 900px;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .logo {
-  height: 230px;
+  height: 60px;
   width: auto;
-  margin-left: 15px;
+  margin-left: 0;
 }
 
 .header-text {

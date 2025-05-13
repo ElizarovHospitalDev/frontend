@@ -1,0 +1,547 @@
+<template>
+  <div class="patient-detail-page">
+    <div class="header">
+      <div class="header-content">
+        <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
+        <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
+      </div>
+      <button class="logout-btn" @click="logout">Выход</button>
+    </div>
+    
+    <div class="content">
+      <div class="sidebar">
+        <div class="menu-item active">Пациент</div>
+        <div class="menu-item">Протез</div>
+        <div class="menu-item">Лечение</div>
+        <div class="menu-item">Коморбидные патологии</div>
+        <div class="menu-item">Микрофлора</div>
+        <div class="menu-item">Операции</div>
+        <div class="menu-item">Анализы</div>
+        <div class="menu-item">Итоги лечения</div>
+        
+        <button class="back-btn" @click="goBack">
+          <span class="back-icon">←</span>
+          Назад
+        </button>
+      </div>
+      
+      <div class="main-content">
+        <div class="search-bar">
+          <input 
+            type="text" 
+            placeholder="Введите данные для поиска" 
+            class="search-input"
+          />
+          <button class="search-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#666"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="patient-info-container">
+          <div v-if="loading" class="loading">Загрузка данных пациента...</div>
+          <div v-else-if="error" class="error">{{ error }}</div>
+          <div v-else-if="patient" class="patient-info">
+            <div class="patient-header">
+              <h2>{{ getFullName(patient) }}</h2>
+              <button class="edit-btn" @click="startEditing" v-if="!isEditing">
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                </svg>
+                Редактировать
+              </button>
+            </div>
+            
+            <!-- Режим просмотра -->
+            <div v-if="!isEditing">
+              <div class="info-row">
+                <div class="info-label">Дата рождения:</div>
+                <div class="info-value">{{ formatDate(patient.birthday) }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Телефон:</div>
+                <div class="info-value">{{ patient.mobile_phone }}</div>
+              </div>
+              <div class="info-row" v-if="patient.address">
+                <div class="info-label">Адрес:</div>
+                <div class="info-value">{{ patient.address }}</div>
+              </div>
+              <div class="info-row">
+                <div class="info-label">Пол:</div>
+                <div class="info-value">{{ patient.sex === 'M' ? 'Мужской' : 'Женский' }}</div>
+              </div>
+            </div>
+            
+            <!-- Режим редактирования -->
+            <form v-else @submit.prevent="saveChanges" class="edit-form">
+              <div class="form-group">
+                <label for="lastName">Фамилия *</label>
+                <input 
+                  id="lastName"
+                  v-model="editForm.last_name"
+                  type="text"
+                  required
+                  placeholder="Введите фамилию"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="firstName">Имя *</label>
+                <input 
+                  id="firstName"
+                  v-model="editForm.first_name"
+                  type="text"
+                  required
+                  placeholder="Введите имя"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="middleName">Отчество</label>
+                <input 
+                  id="middleName"
+                  v-model="editForm.middle_name"
+                  type="text"
+                  placeholder="Введите отчество"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="birthday">Дата рождения *</label>
+                <input 
+                  id="birthday"
+                  v-model="editForm.birthday"
+                  type="date"
+                  required
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="phone">Телефон *</label>
+                <input 
+                  id="phone"
+                  v-model="editForm.mobile_phone"
+                  type="tel"
+                  required
+                  placeholder="+7 (___) ___-__-__"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label>Пол *</label>
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input 
+                      type="radio" 
+                      v-model="editForm.sex" 
+                      value="M"
+                      required
+                    >
+                    Мужской
+                  </label>
+                  <label class="radio-label">
+                    <input 
+                      type="radio" 
+                      v-model="editForm.sex" 
+                      value="W"
+                      required
+                    >
+                    Женский
+                  </label>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="address">Адрес</label>
+                <textarea 
+                  id="address"
+                  v-model="editForm.address"
+                  placeholder="Введите адрес"
+                  rows="3"
+                ></textarea>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-btn" @click="cancelEditing">Отмена</button>
+                <button type="submit" class="save-btn" :disabled="saving">
+                  {{ saving ? 'Сохранение...' : 'Сохранить' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { mapActions } from 'vuex';
+import authService from '@/services/auth.service';
+
+export default {
+  name: 'PatientDetailPage',
+  props: {
+    id: {
+      type: String,
+      required: true
+    }
+  },
+  data() {
+    return {
+      patient: null,
+      loading: true,
+      error: null,
+      isEditing: false,
+      saving: false,
+      editForm: {
+        first_name: '',
+        last_name: '',
+        middle_name: '',
+        birthday: '',
+        mobile_phone: '',
+        sex: '',
+        address: ''
+      }
+    };
+  },
+  methods: {
+    ...mapActions('auth', { logoutAction: 'logout' }),
+    getFullName(patient) {
+      return `${patient.last_name} ${patient.first_name} ${patient.middle_name || ''}`.trim();
+    },
+    formatDate(dateString) {
+      if (!dateString) return '';
+      return new Date(dateString).toLocaleDateString('ru-RU');
+    },
+    async fetchPatientDetails() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const patients = await authService.getPatients();
+        this.patient = patients.find(p => p.id.toString() === this.id);
+        
+        if (!this.patient) {
+          this.error = 'Пациент не найден';
+        }
+      } catch (error) {
+        console.error('Error fetching patient details:', error);
+        this.error = error.message || 'Ошибка при загрузке данных пациента';
+      } finally {
+        this.loading = false;
+      }
+    },
+    startEditing() {
+      // Create a copy of patient data for editing
+      this.editForm = { 
+        ...this.patient,
+        // Format the date for the date input (YYYY-MM-DD)
+        birthday: this.patient.birthday ? new Date(this.patient.birthday).toISOString().split('T')[0] : ''
+      };
+      this.isEditing = true;
+    },
+    cancelEditing() {
+      this.isEditing = false;
+    },
+    async saveChanges() {
+      this.saving = true;
+      try {
+        // Format the data according to the API specification
+        const formattedData = {
+          first_name: this.editForm.first_name,
+          last_name: this.editForm.last_name,
+          middle_name: this.editForm.middle_name || "",
+          birthday: this.editForm.birthday,
+          mobile_phone: this.editForm.mobile_phone,
+          sex: this.editForm.sex,
+          address: this.editForm.address || ""
+        };
+        
+        console.log('Sending data:', formattedData);
+        
+        await authService.updatePatient(this.id, formattedData);
+        this.patient = { ...formattedData };
+        this.isEditing = false;
+        alert('Данные пациента успешно обновлены');
+      } catch (error) {
+        console.error('Error updating patient:', error);
+        alert('Ошибка при обновлении данных пациента: ' + (error.message || 'Неизвестная ошибка'));
+      } finally {
+        this.saving = false;
+      }
+    },
+    goBack() {
+      this.$router.push('/patients');
+    },
+    logout() {
+      this.logoutAction().then(() => {
+        this.$router.push('/');
+      });
+    }
+  },
+  created() {
+    this.fetchPatientDetails();
+  }
+};
+</script>
+
+<style scoped>
+.patient-detail-page {
+  font-family: "JetBrains Mono", Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #e6eec6;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logo {
+  height: 40px;
+  width: auto;
+}
+
+.header h1 {
+  font-size: 18px;
+  color: #666;
+  margin: 0;
+  font-weight: normal;
+}
+
+.logout-btn {
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #f8f8f8;
+  border-right: 1px solid #e6eec6;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  color: #333;
+  border-left: 3px solid transparent;
+}
+
+.menu-item:hover {
+  background-color: #f0f0f0;
+}
+
+.menu-item.active {
+  border-left-color: #9ac531;
+  background-color: #f0f0f0;
+  font-weight: 600;
+}
+
+.back-btn {
+  margin-top: auto;
+  margin-left: 20px;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e6eec6;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #333;
+}
+
+.back-icon {
+  font-size: 18px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.search-bar {
+  display: flex;
+  margin-bottom: 20px;
+  border: 1px solid #e6eec6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+}
+
+.search-btn {
+  background: none;
+  border: none;
+  padding: 0 16px;
+  cursor: pointer;
+}
+
+.patient-info-container {
+  border: 1px solid #e6eec6;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 400px;
+}
+
+.loading, .error {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.error {
+  color: #ff4444;
+}
+
+.patient-info h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.info-label {
+  width: 150px;
+  font-weight: 600;
+  color: #666;
+}
+
+.info-value {
+  flex: 1;
+  color: #333;
+}
+
+.patient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.edit-btn:hover {
+  background: #7fa11e;
+}
+
+.edit-form {
+  margin-top: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input[type="text"],
+.form-group input[type="tel"],
+.form-group input[type="date"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e6eec6;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-btn {
+  padding: 10px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-btn {
+  padding: 10px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: #7fa11e;
+}
+
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+</style>

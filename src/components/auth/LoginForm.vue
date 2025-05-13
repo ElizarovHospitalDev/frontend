@@ -11,6 +11,7 @@
           class="form-input"
           placeholder="Введите ваш логин"
           v-model="login"
+          :disabled="isLoading"
         />
       </div>
       
@@ -22,11 +23,13 @@
             class="form-input"
             placeholder="Введите ваш пароль"
             v-model="password"
+            :disabled="isLoading"
           />
           <button 
             class="toggle-password" 
             @click="togglePasswordVisibility"
             type="button"
+            :disabled="isLoading"
             :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
           >
             <img 
@@ -37,10 +40,19 @@
           </button>
         </div>
       </div>
+
+      <div v-if="error" class="error-message">{{ error }}</div>
       
-      <button class="login-button" @click="handleLogin">Войти</button>
+      <button 
+        class="login-button" 
+        @click="handleLogin"
+        :disabled="isLoading"
+      >
+        <span v-if="isLoading" class="loading-spinner"></span>
+        <span v-else>Войти</span>
+      </button>
       
-      <router-link to="/forgot-password" class="forgot-password">
+      <router-link to="/forgot-password" class="forgot-password" :class="{ 'disabled': isLoading }">
         Забыли пароль?
       </router-link>
     </div>
@@ -53,6 +65,16 @@ import eyeClosed from "@/assets/eye closed_.svg";
 
 export default {
   name: "LoginForm",
+  props: {
+    isLoading: {
+      type: Boolean,
+      default: false
+    },
+    error: {
+      type: String,
+      default: ''
+    }
+  },
   data() {
     return {
       eyeOpen,
@@ -67,6 +89,7 @@ export default {
       this.showPassword = !this.showPassword;
     },
     handleLogin() {
+      if (this.isLoading) return;
       this.$emit('login', { username: this.login, password: this.password });
     }
   }
@@ -163,7 +186,18 @@ export default {
   opacity: 0.8;
 }
 
+.error-message {
+  color: #ff0000;
+  font-size: 14px;
+  margin: -20px 0 20px;
+  text-align: center;
+}
+
 .login-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: #9ac531;
   border: none;
   border-radius: 12px;
@@ -173,14 +207,34 @@ export default {
   font-weight: 700;
   width: 269px;
   height: 57px;
-  display: block;
   margin: 40px auto 20px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
 }
 
-.login-button:hover {
+.login-button:hover:not(:disabled) {
   background-color: #88b32a;
+}
+
+.login-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .forgot-password {
@@ -195,8 +249,13 @@ export default {
   transition: color 0.3s;
 }
 
-.forgot-password:hover {
+.forgot-password:hover:not(.disabled) {
   color: #000000;
+}
+
+.forgot-password.disabled {
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 @media (max-width: 768px) {

@@ -1,5 +1,8 @@
 export const isTokenExpired = (token) => {
-  if (!token) return true;
+  if (!token) {
+    console.log('No token provided to isTokenExpired');
+    return true;
+  }
   
   try {
     const base64Url = token.split('.')[1];
@@ -10,6 +13,13 @@ export const isTokenExpired = (token) => {
 
     const { exp } = JSON.parse(jsonPayload);
     const currentTime = Math.floor(Date.now() / 1000);
+    
+    console.log('Token expiration check:', {
+      expirationTime: exp,
+      currentTime: currentTime,
+      isExpired: exp < currentTime,
+      timeLeft: exp - currentTime
+    });
     
     return exp < currentTime;
   } catch (error) {

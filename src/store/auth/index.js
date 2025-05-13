@@ -20,6 +20,7 @@ const actions = {
   async login({ commit }, credentials) {
     commit('setLoading', true);
     commit('clearError');
+    
     try {
       const response = await authService.login(credentials);
       commit('setTokens', {
@@ -39,6 +40,7 @@ const actions = {
   async requestPasswordReset({ commit }, email) {
     commit('setLoading', true);
     commit('clearError');
+    
     try {
       const response = await authService.requestPasswordReset(email);
       return response;
@@ -53,6 +55,7 @@ const actions = {
   async confirmPasswordReset({ commit }, data) {
     commit('setLoading', true);
     commit('clearError');
+    
     try {
       const response = await authService.confirmPasswordReset(data);
       return response;
@@ -71,12 +74,16 @@ const actions = {
     
     commit('setLoading', true);
     commit('clearError');
+    
     try {
       const response = await authService.refreshToken(state.refreshToken);
       commit('setTokens', {
         access: response.access,
-        refresh: response.refresh
+        refresh: response.refresh || state.refreshToken
       });
+      if (response.user) {
+        commit('setUser', response.user);
+      }
       return response;
     } catch (error) {
       commit('setError', error.message);
@@ -90,6 +97,7 @@ const actions = {
   logout({ commit }) {
     commit('clearTokens');
     commit('setUser', null);
+    commit('clearError');
   }
 };
 

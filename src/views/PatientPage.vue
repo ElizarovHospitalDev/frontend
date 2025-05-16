@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard-page">
-    <DashboardHeader />
+    <DashboardHeader @logout="logout" />
     
     <div class="search-section">
       <div class="search-container">
@@ -54,25 +54,6 @@
   min-height: 100vh;
   font-family: "JetBrains Mono", Helvetica;
   padding: 0;
-}
-.dashboard-header-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 30px 0 0;
-}
-.logout-button {
-  background: #9ac531;
-  color: #fff;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 24px;
-  font-size: 18px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.logout-button:hover {
-  background: #7fa11e;
 }
 .search-section {
   display: flex;

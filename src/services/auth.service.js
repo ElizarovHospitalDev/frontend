@@ -112,6 +112,66 @@ class AuthService {
       throw this.handleError(error);
     }
   }
+  async getProstheses() {
+  try {
+    const response = await axiosInstance.get('/endoprosthetics/');
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+
+async getProsthesis(id) {
+  try {
+    const response = await axiosInstance.get(`/endoprosthetics/${id}/`);
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+
+async updateProsthesis(id, prosthesisData) {
+  try {
+    const response = await axiosInstance.put(`/endoprosthetics/${id}/`, prosthesisData);
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+async createProsthesis(prosthesisData) {
+  try {
+    const response = await axiosInstance.post('/endoprosthetics/', prosthesisData);
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+async getProsthesisTypes() {
+  try {
+    const response = await axiosInstance.get('/endoprosthetics/types/');
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+
+async getProsthesisVendors() {
+  try {
+    const response = await axiosInstance.get('/endoprosthetics/vendors/');
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+
+async getProsthesisForms() {
+  try {
+    const response = await axiosInstance.get('/endoprosthetics/forms/');
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
 
   async getCsrfToken() {
     try {

@@ -4,6 +4,7 @@ import ForgotPasswordPage from '@/views/ForgotPasswordPage.vue';
 import PatientPage from '@/views/PatientPage.vue';
 import AddPatientPage from '@/views/AddPatientPage.vue';
 import PatientDetailPage from '@/views/PatientDetailPage.vue';
+import ProsthesisInfo from '@/views/PatientProtes.vue';
 
 const routes = [
   {
@@ -32,6 +33,13 @@ const routes = [
     path: '/patients/:id',
     name: 'PatientDetail',
     component: PatientDetailPage,
+    meta: { requiresAuth: true },
+    props: true
+  },
+  {
+    path: '/patients/:id/prosthesis',
+    name: 'ProsthesisInfo',
+    component: ProsthesisInfo,
     meta: { requiresAuth: true },
     props: true
   }

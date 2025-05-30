@@ -37,11 +37,11 @@ const routes = [
     props: true
   },
   {
-    path: '/patients/:id/prosthesis',
-    name: 'ProsthesisInfo',
-    component: ProsthesisInfo,
-    meta: { requiresAuth: true },
-    props: true
+  path: '/patients/:id/prosthesis',
+  name: 'ProsthesisInfo',
+  component: ProsthesisInfo,
+  meta: { requiresAuth: true },
+  props: route => ({ patientId: route.params.id })  
   }
 ];
 

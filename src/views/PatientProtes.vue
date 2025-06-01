@@ -1,5 +1,6 @@
 <template>
   <div class="prosthesis-detail-page">
+    <!-- Шапка (остается без изменений) -->
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -9,6 +10,7 @@
     </div>
     
     <div class="content">
+      <!-- Боковое меню (остается без изменений) -->
       <div class="sidebar">
         <div class="menu-item" @click="goToPatient">Пациент</div>
         <div class="menu-item active">Протез</div>
@@ -25,70 +27,112 @@
         </button>
       </div>
       
+      <!-- Основное содержимое -->
       <div class="main-content">
+        <!-- Строка поиска с улучшениями -->
         <div class="search-bar">
-          <input type="text" placeholder="Введите данные для поиска" class="search-input">
-          <button class="search-btn">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Поиск по типу, производителю, партии или дате" 
+            class="search-input"
+            @input="handleSearch"
+          >
+          <button 
+            v-if="searchQuery" 
+            @click="clearSearch" 
+            class="clear-search-btn"
+          >
+            ×
+          </button>
+          <button class="search-btn" @click="handleSearch">
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#666"/>
             </svg>
           </button>
         </div>
         
-        <div class="prosthesis-info-container">
-          <div v-if="loading" class="loading">Загрузка данных протеза...</div>
-          <div v-else-if="error" class="error">{{ error }}</div>
-          
-          <div v-else-if="!prosthesis && !isEditing" class="no-prosthesis">
-            <h2>Данные о протезе отсутствуют</h2>
-            <p>Для этого пациента нет информации о протезе.</p>
-            <button class="add-btn" @click="startAdding">
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-              </svg>
-              Добавить данные о протезе
-            </button>
+        <!-- Кнопка добавления протеза -->
+        <div class="prosthesis-actions">
+          <button class="add-btn" @click="startAdding">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+            </svg>
+            Добавить протез
+          </button>
+        </div>
+        
+        <!-- Состояния загрузки и ошибки -->
+        <div v-if="loading" class="loading">Загрузка данных протезов...</div>
+        <div v-else-if="error" class="error">{{ error }}</div>
+        
+        <!-- Список протезов с фильтрацией -->
+        <div v-else class="prosthesis-list">
+          <div v-if="filteredProstheses.length === 0" class="no-prosthesis">
+            <h2 v-if="searchQuery">Ничего не найдено</h2>
+            <h2 v-else>Данные о протезах отсутствуют</h2>
+            <p v-if="searchQuery">Попробуйте изменить параметры поиска</p>
+            <p v-else>Для этого пациента нет информации о протезах.</p>
           </div>
           
-          <div v-else class="prosthesis-info">
+          <!-- Карточка протеза -->
+          <div 
+            v-for="(prosthesis, index) in filteredProstheses" 
+            :key="prosthesis.id" 
+            class="prosthesis-item"
+          >
             <div class="prosthesis-header">
-              <h2>Информация о протезе пациента</h2>
-              <button class="edit-btn" @click="startEditing" v-if="!isEditing">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
-                </svg>
-                Редактировать
-              </button>
-            </div>
-            
-            <div v-if="!isEditing">
-              <div class="info-row">
-                <div class="info-label">Вид:</div>
-                <div class="info-value">{{ getProsthesisTypeName(prosthesis?.type) || 'Не указано' }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Производитель:</div>
-                <div class="info-value">{{ getProsthesisVendorName(prosthesis?.vendor) || 'Не указано' }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Партия:</div>
-                <div class="info-value">{{ prosthesis?.batch || 'Не указано' }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Дата установки:</div>
-                <div class="info-value">{{ formatDate(prosthesis?.date) || 'Не указана' }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Форма:</div>
-                <div class="info-value">{{ getProsthesisFormName(prosthesis?.form) || 'Не указано' }}</div>
-              </div>
-              <div class="info-row">
-                <div class="info-label">Стабильность:</div>
-                <div class="info-value">{{ prosthesisStabilityName(prosthesis?.stable) || 'Не указана' }}</div>
+              <h3>Протез #{{ index + 1 }}</h3>
+              <div class="prosthesis-actions">
+                <button class="edit-btn" @click="startEditing(prosthesis)">
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                  </svg>
+                  Редактировать
+                </button>
+                <button class="delete-btn" @click="confirmDelete(prosthesis.id)">
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                  </svg>
+                  Удалить
+                </button>
               </div>
             </div>
             
-            <form v-else @submit.prevent="saveChanges" class="edit-form">
+            <!-- Информация о протезе -->
+            <div class="info-row">
+              <div class="info-label">Вид:</div>
+              <div class="info-value">{{ getProsthesisTypeName(prosthesis.type) || 'Не указано' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Производитель:</div>
+              <div class="info-value">{{ getProsthesisVendorName(prosthesis.vendor) || 'Не указано' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Партия:</div>
+              <div class="info-value">{{ prosthesis.batch || 'Не указано' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Дата установки:</div>
+              <div class="info-value">{{ formatDate(prosthesis.date) || 'Не указана' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Форма:</div>
+              <div class="info-value">{{ getProsthesisFormName(prosthesis.form) || 'Не указано' }}</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label">Стабильность:</div>
+              <div class="info-value">{{ prosthesisStabilityName(prosthesis.stable) || 'Не указана' }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Модальное окно редактирования/добавления -->
+        <div v-if="isEditing" class="modal-overlay">
+          <div class="modal-content">
+            <h2>{{ editingProsthesisId ? 'Редактирование протеза' : 'Добавление нового протеза' }}</h2>
+            
+            <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-group">
                 <label for="type">Вид эндопротеза *</label>
                 <select id="type" v-model="editForm.type" required>
@@ -147,6 +191,7 @@
 <script>
 import { mapActions } from 'vuex';
 import authService from '@/services/auth.service';
+import debounce from 'lodash/debounce';
 
 export default {
   name: 'PatientProtes',
@@ -158,11 +203,13 @@ export default {
   },
   data() {
     return {
-      prosthesis: null,
+      prostheses: [],
       loading: true,
       error: null,
       isEditing: false,
+      editingProsthesisId: null,
       saving: false,
+      searchQuery: '',
       editForm: {
         type: '',
         vendor: '',
@@ -172,7 +219,6 @@ export default {
         stable: '',
         patient: null
       },
-      // Список разрешенных типов протезов
       allowedProsthesisTypes: [
         { id: 1, name: 'Uni' },
         { id: 2, name: 'CR' },
@@ -182,58 +228,71 @@ export default {
         { id: 6, name: 'Протез удален' },
         { id: 7, name: 'Спейсер' }
       ],
-      prosthesisTypes: [], // Будет заполнено из сервера
+      prosthesisTypes: [],
       prosthesisVendors: [],
       prosthesisForms: []
     };
+  },
+  computed: {
+    filteredProstheses() {
+      if (!this.searchQuery) return this.prostheses;
+      
+      const query = this.searchQuery.toLowerCase();
+      return this.prostheses.filter(prosthesis => {
+        return (
+          (prosthesis.batch && prosthesis.batch.toLowerCase().includes(query)) ||
+          (this.getProsthesisTypeName(prosthesis.type) && 
+            this.getProsthesisTypeName(prosthesis.type).toLowerCase().includes(query)) ||
+          (this.getProsthesisVendorName(prosthesis.vendor) && 
+            this.getProsthesisVendorName(prosthesis.vendor).toLowerCase().includes(query)) ||
+          (prosthesis.date && this.formatDate(prosthesis.date).toLowerCase().includes(query))
+        );
+      });
+    }
   },
   watch: {
     patientId: {
       immediate: true,
       handler(newVal) {
         if (newVal) {
-          this.fetchProsthesis();
+          this.fetchProstheses();
         }
       }
     }
   },
-  async created() {
-    await this.loadReferenceData();
+  created() {
+    this.loadReferenceData();
+    this.handleSearch = debounce(this.handleSearch, 300);
   },
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
     
     async loadReferenceData() {
       try {
-        // Загружаем типы с сервера, но фильтруем по разрешенным
         const [serverTypes, vendors, forms] = await Promise.all([
           authService.getProsthesisTypes(),
           authService.getProsthesisVendors().catch(() => []),
           authService.getProsthesisForms().catch(() => [])
         ]);
         
-        // Фильтруем типы по разрешенному списку
         this.prosthesisTypes = serverTypes.filter(type => 
           this.allowedProsthesisTypes.some(allowed => allowed.name === type.name)
         );
         
-        // Если на сервере нет нужных типов, используем локальный список
         if (this.prosthesisTypes.length === 0) {
           this.prosthesisTypes = this.allowedProsthesisTypes;
         }
         
         this.prosthesisVendors = vendors || [];
         this.prosthesisForms = forms || [];
-        
       } catch (error) {
         console.error('Ошибка загрузки справочных данных:', error);
         this.error = 'Ошибка загрузки справочных данных';
-        // Используем локальный список как fallback
         this.prosthesisTypes = this.allowedProsthesisTypes;
       }
     },
     
-    async fetchProsthesis() {
+    async fetchProstheses() {
       this.loading = true;
       this.error = null;
       
@@ -250,9 +309,9 @@ export default {
           throw new Error('Некорректный формат данных протезов');
         }
         
-        this.prosthesis = response.find(p => String(p.patient) === String(this.patientId)) || null;
+        this.prostheses = response.filter(p => String(p.patient) === String(this.patientId));
       } catch (error) {
-        console.error('Ошибка загрузки данных протеза:', error);
+        console.error('Ошибка загрузки данных протезов:', error);
         this.error = error.response?.data?.message || error.message || 'Ошибка загрузки данных';
         
         if (error.response?.status === 401) {
@@ -263,14 +322,21 @@ export default {
       }
     },
     
+    handleSearch() {
+      // Логика поиска реализована в computed-свойстве filteredProstheses
+      console.log('Поиск:', this.searchQuery);
+    },
+    
+    clearSearch() {
+      this.searchQuery = '';
+    },
+    
     async saveChanges() {
-      // Проверка обязательных полей
       if (!this.editForm.type || !this.editForm.date || this.editForm.stable === '') {
         this.error = 'Заполните все обязательные поля (Тип, Дата установки, Стабильность)';
         return;
       }
 
-      // Проверка, что выбран разрешенный тип
       const allowedTypeNames = this.allowedProsthesisTypes.map(t => t.name);
       if (!allowedTypeNames.includes(this.editForm.type)) {
         this.error = `Выбран недопустимый тип протеза. Разрешены только: ${allowedTypeNames.join(', ')}`;
@@ -291,15 +357,14 @@ export default {
           patient: this.patientId
         };
 
-        if (this.prosthesis?.id) {
-          // Обновляем существующий протез
-          const updated = await authService.saveProsthesis(prosthesisData, this.prosthesis.id);
-          this.prosthesis = { ...this.prosthesis, ...updated };
+        if (this.editingProsthesisId) {
+          const updated = await authService.saveProsthesis(prosthesisData, this.editingProsthesisId);
+          const index = this.prostheses.findIndex(p => p.id === this.editingProsthesisId);
+          this.prostheses.splice(index, 1, updated);
           this.showSuccessMessage('Данные протеза успешно обновлены');
         } else {
-          // Создаем новый протез
           const created = await authService.saveProsthesis(prosthesisData);
-          this.prosthesis = created;
+          this.prostheses.push(created);
           this.showSuccessMessage('Данные протеза успешно сохранены');
         }
 
@@ -313,7 +378,6 @@ export default {
     },
 
     showSuccessMessage(message) {
-      // Можно заменить на красивый toast или alert
       alert(message);
     },
     
@@ -327,24 +391,25 @@ export default {
         stable: '',
         patient: this.patientId
       };
+      this.editingProsthesisId = null;
       this.isEditing = true;
     },
     
-    startEditing() {
+    startEditing(prosthesis) {
       this.editForm = {
-        type: this.getProsthesisTypeName(this.prosthesis.type),
-        vendor: this.getProsthesisVendorName(this.prosthesis.vendor),
-        batch: this.prosthesis.batch,
-        date: this.prosthesis.date ? this.prosthesis.date.split('T')[0] : '',
-        form: this.getProsthesisFormName(this.prosthesis.form),
-        stable: this.prosthesis.stable,
+        type: this.getProsthesisTypeName(prosthesis.type),
+        vendor: this.getProsthesisVendorName(prosthesis.vendor),
+        batch: prosthesis.batch,
+        date: prosthesis.date ? prosthesis.date.split('T')[0] : '',
+        form: this.getProsthesisFormName(prosthesis.form),
+        stable: prosthesis.stable,
         patient: this.patientId
       };
+      this.editingProsthesisId = prosthesis.id;
       this.isEditing = true;
     },
     
     getProsthesisTypeName(typeId) {
-      // Ищем сначала в загруженных с сервера типах
       const type = this.prosthesisTypes.find(t => t.id === typeId) || 
                    this.allowedProsthesisTypes.find(t => t.id === typeId);
       return type ? type.name : null;
@@ -387,6 +452,19 @@ export default {
       this.isEditing = false;
     },
     
+    async confirmDelete(id) {
+      if (confirm('Вы уверены, что хотите удалить этот протез?')) {
+        try {
+          await authService.deleteProsthesis(id);
+          this.prostheses = this.prostheses.filter(p => p.id !== id);
+          this.showSuccessMessage('Протез успешно удален');
+        } catch (error) {
+          console.error('Ошибка удаления:', error);
+          this.error = error.response?.data?.message || error.message || 'Ошибка при удалении';
+        }
+      }
+    },
+    
     goToPatient() {
       this.$router.push({ name: 'PatientDetail', params: { id: this.patientId } });
     },
@@ -403,7 +481,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 .prosthesis-detail-page {
@@ -506,20 +583,36 @@ export default {
   padding: 20px;
 }
 
+/* Стили для поиска (новые) */
 .search-bar {
   display: flex;
   margin-bottom: 20px;
   border: 1px solid #e6eec6;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
 }
 
 .search-input {
   flex: 1;
   padding: 10px 16px;
+  padding-right: 40px;
   border: none;
   outline: none;
   font-size: 16px;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  padding: 0 8px;
 }
 
 .search-btn {
@@ -529,11 +622,26 @@ export default {
   cursor: pointer;
 }
 
-.prosthesis-info-container {
-  border: 1px solid #e6eec6;
+.prosthesis-actions {
+  margin-bottom: 30px;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #9ac531;
+  color: white;
+  border: none;
   border-radius: 8px;
-  padding: 20px;
-  min-height: 400px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #7fa11e;
 }
 
 .loading, .error {
@@ -561,52 +669,35 @@ export default {
   margin-bottom: 20px;
 }
 
-.add-btn {
+.prosthesis-list {
+  margin-top: 10px;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #9ac531;
-  color: white;
-  border: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.prosthesis-item {
+  border: 1px solid #e6eec6;
   border-radius: 8px;
-  padding: 10px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  margin: 0 auto;
-  transition: background 0.2s;
-}
-
-.add-btn:hover {
-  background: #7fa11e;
-}
-
-.prosthesis-info h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.info-row {
-  display: flex;
-  margin-bottom: 12px;
-}
-
-.info-label {
-  width: 150px;
-  font-weight: 600;
-  color: #666;
-}
-
-.info-value {
-  flex: 1;
-  color: #333;
+  padding: 20px;
 }
 
 .prosthesis-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+}
+
+.prosthesis-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.prosthesis-actions {
+  display: flex;
+  gap: 10px;
+  margin: 0;
 }
 
 .edit-btn {
@@ -625,6 +716,70 @@ export default {
 
 .edit-btn:hover {
   background: #7fa11e;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.delete-btn:hover {
+  background: #cc0000;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.info-label {
+  width: 150px;
+  font-weight: 600;
+  color: #666;
+}
+
+.info-value {
+  flex: 1;
+  color: #333;
+}
+
+/* Модальное окно (новое) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
 }
 
 .edit-form {
@@ -687,29 +842,5 @@ export default {
 .save-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
-}
-.suggestions {
-  position: absolute;
-  z-index: 1000;
-  background: white;
-  border: 1px solid #e6eec6;
-  border-radius: 4px;
-  max-height: 200px;
-  overflow-y: auto;
-  width: calc(100% - 2px); /* Учитываем границу */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.suggestions div {
-  padding: 8px 12px;
-  cursor: pointer;
-}
-
-.suggestions div:hover {
-  background-color: #f0f0f0;
-}
-
-.form-group {
-  position: relative;
 }
 </style>

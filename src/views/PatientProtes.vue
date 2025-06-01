@@ -1,6 +1,5 @@
 <template>
   <div class="prosthesis-detail-page">
-    <!-- Шапка (остается без изменений) -->
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -10,7 +9,6 @@
     </div>
     
     <div class="content">
-      <!-- Боковое меню (остается без изменений) -->
       <div class="sidebar">
         <div class="menu-item" @click="goToPatient">Пациент</div>
         <div class="menu-item active">Протез</div>
@@ -27,9 +25,7 @@
         </button>
       </div>
       
-      <!-- Основное содержимое -->
       <div class="main-content">
-        <!-- Строка поиска с улучшениями -->
         <div class="search-bar">
           <input 
             type="text" 
@@ -52,7 +48,6 @@
           </button>
         </div>
         
-        <!-- Кнопка добавления протеза -->
         <div class="prosthesis-actions">
           <button class="add-btn" @click="startAdding">
             <svg width="16" height="16" viewBox="0 0 24 24">
@@ -62,11 +57,9 @@
           </button>
         </div>
         
-        <!-- Состояния загрузки и ошибки -->
         <div v-if="loading" class="loading">Загрузка данных протезов...</div>
         <div v-else-if="error" class="error">{{ error }}</div>
         
-        <!-- Список протезов с фильтрацией -->
         <div v-else class="prosthesis-list">
           <div v-if="filteredProstheses.length === 0" class="no-prosthesis">
             <h2 v-if="searchQuery">Ничего не найдено</h2>
@@ -75,7 +68,6 @@
             <p v-else>Для этого пациента нет информации о протезах.</p>
           </div>
           
-          <!-- Карточка протеза -->
           <div 
             v-for="(prosthesis, index) in filteredProstheses" 
             :key="prosthesis.id" 
@@ -99,7 +91,6 @@
               </div>
             </div>
             
-            <!-- Информация о протезе -->
             <div class="info-row">
               <div class="info-label">Вид:</div>
               <div class="info-value">{{ getProsthesisTypeName(prosthesis.type) || 'Не указано' }}</div>
@@ -127,7 +118,6 @@
           </div>
         </div>
         
-        <!-- Модальное окно редактирования/добавления -->
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingProsthesisId ? 'Редактирование протеза' : 'Добавление нового протеза' }}</h2>

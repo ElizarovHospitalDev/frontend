@@ -1,6 +1,5 @@
 <template>
   <div class="operations-page">
-    <!-- Header remains the same -->
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -10,7 +9,6 @@
     </div>
     
     <div class="content">
-      <!-- Sidebar remains the same -->
       <div class="sidebar">
         <div class="menu-item" @click="goToPatient">Пациент</div>
         <div class="menu-item" @click="goToProsthesis">Протез</div>
@@ -146,7 +144,6 @@
           </div>
         </div>
         
-        <!-- Модальное окно редактирования/добавления -->
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingOperationId ? 'Редактирование операции' : 'Добавление операции' }}</h2>
@@ -331,7 +328,6 @@ export default {
       try {
         const stages = await authService.getOperationStages();
         this.operationStages = stages;
-        // Устанавливаем первый этап операции по умолчанию
         if (stages.length > 0) {
           this.editForm.operation_stage = stages[0].id;
         }
@@ -492,7 +488,6 @@ export default {
     },
     
     handleSearch: debounce(function() {
-      // Логика поиска реализована в computed-свойстве filteredOperations
     }, 300),
     
     clearSearch() {

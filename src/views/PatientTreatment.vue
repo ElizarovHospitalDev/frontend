@@ -1,6 +1,5 @@
 <template>
   <div class="treatment-page">
-    <!-- Header -->
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -10,7 +9,6 @@
     </div>
     
     <div class="content">
-      <!-- Sidebar -->
       <div class="sidebar">
         <div class="menu-item" @click="goToPatient">Пациент</div>
         <div class="menu-item" @click="goToProsthesis">Протез</div>
@@ -125,8 +123,7 @@
             </div>
           </div>
         </div>
-        
-        <!-- Модальное окно редактирования/добавления -->
+
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingTreatmentId ? 'Редактирование лечения' : 'Добавление лечения' }}</h2>
@@ -514,7 +511,6 @@ export default {
     },
     
     handleSearch: debounce(function() {
-      // Логика поиска реализована в computed-свойстве filteredTreatments
     }, 300),
     
     clearSearch() {

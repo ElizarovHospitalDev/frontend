@@ -180,7 +180,6 @@ class AuthService {
         throw new Error('Authentication failed');
       }
 
-      // Prepare data according to API schema
       const requestData = {
         type: await this.resolveTypeId(data.type),
         vendor: data.vendor ? await this.resolveVendorId(data.vendor) : null,
@@ -270,7 +269,6 @@ class AuthService {
     }
   }
 
-  // Helper methods
   async resolveTypeId(type) {
     if (!type) return null;
     if (typeof type === 'number') return type;

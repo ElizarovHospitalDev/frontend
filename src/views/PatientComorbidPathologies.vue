@@ -1,6 +1,5 @@
 <template>
   <div class="comorbid-pathologies-page">
-    <!-- Шапка (остается без изменений) -->
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -115,7 +114,6 @@
           </div>
         </div>
         
-        <!-- Модальное окно редактирования -->
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingPathologyId ? 'Редактирование данных' : 'Добавление данных' }}</h2>
@@ -343,7 +341,6 @@ export default {
     },
     
     handleSearch: debounce(function() {
-      // Логика поиска реализована в computed-свойстве filteredPathologies
     }, 300),
     
     clearSearch() {
@@ -674,7 +671,6 @@ export default {
   color: #333;
 }
 
-/* Модальное окно */
 .modal-overlay {
   position: fixed;
   top: 0;

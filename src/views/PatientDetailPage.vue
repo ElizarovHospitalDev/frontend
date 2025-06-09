@@ -10,26 +10,14 @@
     
     <div class="content">
       <div class="sidebar">
-        <div 
-          class="menu-item" 
-          :class="{active: activeTab === 'patient'}"
-          @click="activeTab = 'patient'"
-        >
-          Пациент
-        </div>
-        <div 
-          class="menu-item" 
-          :class="{active: activeTab === 'prosthesis'}"
-          @click="goToProsthesis"
-        >
-          Протез
-        </div>
-        <div class="menu-item">Лечение</div>
-        <div class="menu-item">Коморбидные патологии</div>
-        <div class="menu-item">Микрофлора</div>
-        <div class="menu-item">Операции</div>
-        <div class="menu-item">Анализы</div>
-        <div class="menu-item">Итоги лечения</div>
+        <div class="menu-item active">Пациент</div>
+        <div class="menu-item" @click="goToProsthesis">Протез</div>
+        <div class="menu-item" @click="goToTreatment">Лечение</div>
+        <div class="menu-item" @click="goToComorbidPathologies">Коморбидные патологии</div>
+        <div class="menu-item" @click="goToMicroflora">Микрофлора</div>
+        <div class="menu-item" @click="goToOperations">Операции</div>
+        <div class="menu-item" @click="goToAnalysis">Анализы</div>
+        <div class="menu-item" @click="goToOutcomes">Итоги лечения</div>
         
         <button class="back-btn" @click="goBack">
           <span class="back-icon">←</span>
@@ -41,10 +29,19 @@
         <div class="search-bar">
           <input 
             type="text" 
-            placeholder="Введите данные для поиска" 
+            placeholder="Поиск по пациенту" 
             class="search-input"
-          />
-          <button class="search-btn">
+            v-model="searchQuery"
+            @input="handleSearch"
+          >
+          <button 
+            v-if="searchQuery" 
+            @click="clearSearch" 
+            class="clear-search-btn"
+          >
+            ×
+          </button>
+          <button class="search-btn" @click="handleSearch">
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#666"/>
             </svg>
@@ -54,7 +51,15 @@
         <div class="patient-info-container">
           <div v-if="loading" class="loading">Загрузка данных пациента...</div>
           <div v-else-if="error" class="error">{{ error }}</div>
-          <div v-else-if="patient" class="patient-info">
+          
+          <div v-else-if="!patient" class="no-patient">
+            <h2>Пациент не найден</h2>
+            <button class="add-btn" @click="goBack">
+              Вернуться к списку пациентов
+            </button>
+          </div>
+          
+          <div v-else class="patient-info">
             <div class="patient-header">
               <h2>{{ getFullName(patient) }}</h2>
               <button class="edit-btn" @click="startEditing" v-if="!isEditing">
@@ -65,7 +70,6 @@
               </button>
             </div>
             
-            <!-- Режим просмотра -->
             <div v-if="!isEditing">
               <div class="info-row">
                 <div class="info-label">Дата рождения:</div>
@@ -73,40 +77,41 @@
               </div>
               <div class="info-row">
                 <div class="info-label">Телефон:</div>
-                <div class="info-value">{{ patient.mobile_phone }}</div>
-              </div>
-              <div class="info-row" v-if="patient.address">
-                <div class="info-label">Адрес:</div>
-                <div class="info-value">{{ patient.address }}</div>
+                <div class="info-value">{{ formatPhone(patient.mobile_phone) }}</div>
               </div>
               <div class="info-row">
                 <div class="info-label">Пол:</div>
                 <div class="info-value">{{ patient.sex === 'M' ? 'Мужской' : 'Женский' }}</div>
               </div>
+              <div class="info-row" v-if="patient.address">
+                <div class="info-label">Адрес:</div>
+                <div class="info-value">{{ patient.address }}</div>
+              </div>
             </div>
             
-            <!-- Режим редактирования -->
             <form v-else @submit.prevent="saveChanges" class="edit-form">
-              <div class="form-group">
-                <label for="lastName">Фамилия *</label>
-                <input 
-                  id="lastName"
-                  v-model="editForm.last_name"
-                  type="text"
-                  required
-                  placeholder="Введите фамилию"
-                >
-              </div>
-              
-              <div class="form-group">
-                <label for="firstName">Имя *</label>
-                <input 
-                  id="firstName"
-                  v-model="editForm.first_name"
-                  type="text"
-                  required
-                  placeholder="Введите имя"
-                >
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="lastName">Фамилия *</label>
+                  <input 
+                    id="lastName"
+                    v-model="editForm.last_name"
+                    type="text"
+                    required
+                    placeholder="Введите фамилию"
+                  >
+                </div>
+                
+                <div class="form-group">
+                  <label for="firstName">Имя *</label>
+                  <input 
+                    id="firstName"
+                    v-model="editForm.first_name"
+                    type="text"
+                    required
+                    placeholder="Введите имя"
+                  >
+                </div>
               </div>
               
               <div class="form-group">
@@ -119,25 +124,27 @@
                 >
               </div>
               
-              <div class="form-group">
-                <label for="birthday">Дата рождения *</label>
-                <input 
-                  id="birthday"
-                  v-model="editForm.birthday"
-                  type="date"
-                  required
-                >
-              </div>
-              
-              <div class="form-group">
-                <label for="phone">Телефон *</label>
-                <input 
-                  id="phone"
-                  v-model="editForm.mobile_phone"
-                  type="tel"
-                  required
-                  placeholder="+7 (___) ___-__-__"
-                >
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="birthday">Дата рождения *</label>
+                  <input 
+                    id="birthday"
+                    v-model="editForm.birthday"
+                    type="date"
+                    required
+                  >
+                </div>
+                
+                <div class="form-group">
+                  <label for="phone">Телефон *</label>
+                  <input 
+                    id="phone"
+                    v-model="editForm.mobile_phone"
+                    type="tel"
+                    required
+                    placeholder="+7 (___) ___-__-__"
+                  >
+                </div>
               </div>
               
               <div class="form-group">
@@ -191,6 +198,7 @@
 <script>
 import { mapActions } from 'vuex';
 import authService from '@/services/auth.service';
+import debounce from 'lodash/debounce';
 
 export default {
   name: 'PatientDetailPage',
@@ -202,12 +210,12 @@ export default {
   },
   data() {
     return {
-      activeTab: 'patient',
       patient: null,
       loading: true,
       error: null,
       isEditing: false,
       saving: false,
+      searchQuery: '',
       editForm: {
         first_name: '',
         last_name: '',
@@ -221,30 +229,40 @@ export default {
   },
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
+    
     getFullName(patient) {
       return `${patient.last_name} ${patient.first_name} ${patient.middle_name || ''}`.trim();
     },
+    
     formatDate(dateString) {
-      if (!dateString) return '';
+      if (!dateString) return 'Не указана';
       return new Date(dateString).toLocaleDateString('ru-RU');
     },
+    
+    formatPhone(phone) {
+      if (!phone) return 'Не указан';
+      // Форматирование телефона в читаемый вид
+      return phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5');
+    },
+    
     async fetchPatientDetails() {
       this.loading = true;
       this.error = null;
       try {
-        const patients = await authService.getPatients();
-        this.patient = patients.find(p => p.id.toString() === this.id);
-        
-        if (!this.patient) {
-          this.error = 'Пациент не найден';
-        }
+        const response = await authService.getPatient(this.id);
+        this.patient = response;
       } catch (error) {
-        console.error('Error fetching patient details:', error);
-        this.error = error.message || 'Ошибка при загрузке данных пациента';
+        console.error('Ошибка загрузки данных пациента:', error);
+        this.error = error.response?.data?.message || error.message || 'Ошибка при загрузке данных';
+        
+        if (error.response?.status === 401) {
+          this.logout();
+        }
       } finally {
         this.loading = false;
       }
     },
+    
     startEditing() {
       this.editForm = { 
         ...this.patient,
@@ -252,9 +270,11 @@ export default {
       };
       this.isEditing = true;
     },
+    
     cancelEditing() {
       this.isEditing = false;
     },
+    
     async saveChanges() {
       this.saving = true;
       try {
@@ -263,39 +283,85 @@ export default {
           last_name: this.editForm.last_name,
           middle_name: this.editForm.middle_name || "",
           birthday: this.editForm.birthday,
-          mobile_phone: this.editForm.mobile_phone,
+          mobile_phone: this.editForm.mobile_phone.replace(/\D/g, ''),
           sex: this.editForm.sex,
           address: this.editForm.address || ""
         };
         
-        await authService.updatePatient(this.id, formattedData);
-        this.patient = { ...this.editForm };
+        const updated = await authService.updatePatient(this.id, formattedData);
+        this.patient = updated;
         this.isEditing = false;
-        alert('Данные пациента успешно обновлены');
+        this.showSuccessMessage('Данные пациента успешно обновлены');
       } catch (error) {
-        console.error('Error updating patient:', error);
-        alert('Ошибка при обновлении данных пациента: ' + (error.message || 'Неизвестная ошибка'));
+        console.error('Ошибка обновления пациента:', error);
+        this.error = error.response?.data?.message || error.message || 'Ошибка при обновлении данных';
       } finally {
         this.saving = false;
       }
     },
-    goToProsthesis() {
-      this.$router.push({
-        name: 'ProsthesisInfo',
-        params: { id: this.id }
-      });
+    
+    showSuccessMessage(message) {
+      alert(message);
     },
+    
+    goToPatient() {
+      this.$router.push({ name: 'PatientDetail', params: { id: this.patientId } });
+    },
+    
+    goToProsthesis() {
+      this.$router.push({ name: 'ProsthesisInfo', params: { id: this.patientId } });
+    },
+    
+    goToTreatment() {
+      this.$router.push({ name: 'PatientTreatment', params: { id: this.patientId } });
+    },
+    
+    goToComorbidPathologies() {
+      this.$router.push({ name: 'PatientComorbidPathologies', params: { id: this.patientId } });
+    },
+    
+    goToOperations() {
+      this.$router.push({ name: 'PatientOperations', params: { id: this.patientId } });
+    },
+    
+    goToAnalysis() {
+      this.$router.push({ name: 'PatientAnalysis', params: { id: this.patientId } });
+    },
+    
+    goToOutcomes() {
+      this.$router.push({ name: 'PatientOutcomes', params: { id: this.patientId } });
+    },
+    
     goBack() {
       this.$router.push('/patients');
     },
+    
+    handleSearch: debounce(function() {
+      // Логика поиска может быть реализована здесь
+    }, 300),
+    
+    clearSearch() {
+      this.searchQuery = '';
+    },
+    
     logout() {
       this.logoutAction().then(() => {
         this.$router.push('/');
       });
     }
   },
-  created() {
-    this.fetchPatientDetails();
+  async created() {
+    await this.fetchPatientDetails();
+  },
+  watch: {
+    id: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.fetchPatientDetails();
+        }
+      }
+    }
   }
 };
 </script>
@@ -407,14 +473,29 @@ export default {
   border: 1px solid #e6eec6;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
 }
 
 .search-input {
   flex: 1;
   padding: 10px 16px;
+  padding-right: 40px;
   border: none;
   outline: none;
   font-size: 16px;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 18px;
+  padding: 0 8px;
 }
 
 .search-btn {
@@ -439,6 +520,36 @@ export default {
 
 .error {
   color: #ff4444;
+}
+
+.no-patient {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.no-patient h2 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 0 auto;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #7fa11e;
 }
 
 .patient-info h2 {
@@ -492,6 +603,15 @@ export default {
   margin-top: 20px;
 }
 
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
 .form-group {
   margin-bottom: 16px;
 }
@@ -512,6 +632,10 @@ export default {
   border: 1px solid #e6eec6;
   border-radius: 6px;
   font-size: 14px;
+}
+
+.form-group textarea {
+  min-height: 80px;
 }
 
 .radio-group {

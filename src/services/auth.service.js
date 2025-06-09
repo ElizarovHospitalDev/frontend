@@ -298,6 +298,51 @@ class AuthService {
     return found?.id || null;
   }
 
+  // Comorbid pathologies methods
+  async getComorbidPathologies() {
+    try {
+      const response = await axiosInstance.get('/treatments/comobrid-pathologies/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getComorbidPathology(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/comobrid-pathologies/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createComorbidPathology(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/comobrid-pathologies/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateComorbidPathology(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/comobrid-pathologies/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteComorbidPathology(id) {
+    try {
+      await axiosInstance.delete(`/treatments/comobrid-pathologies/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   formatDateForAPI(date) {
     if (!date) return null;
     if (typeof date === 'string') {
@@ -309,6 +354,336 @@ class AuthService {
       return date.toISOString().split('T')[0];
     }
     return null;
+  }
+
+  // Microflora methods
+  async getMicrofloras() {
+    try {
+      const response = await axiosInstance.get('/treatments/microfloras/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getMicroflora(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/microfloras/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createMicroflora(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/microfloras/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateMicroflora(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/microfloras/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteMicroflora(id) {
+    try {
+      await axiosInstance.delete(`/treatments/microfloras/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Treatment methods
+  async getTreatments(params = {}) {
+    try {
+      const response = await axiosInstance.get('/treatments/', { params });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getTreatment(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createTreatment(data) {
+    try {
+      const requestData = {
+        patient: Number(data.patient),
+        reason: data.reason || null,
+        form: Number(data.form),
+        therapy: data.therapy || null,
+        form_pjl: data.form_pjl || null,
+        local_status: data.local_status || null,
+        thigh_defect: data.thigh_defect || null,
+        shin_defect: data.shin_defect || null,
+        therapy_option: data.therapy_option || null
+      };
+      
+      const response = await axiosInstance.post('/treatments/', requestData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateTreatment(id, data) {
+    try {
+      const requestData = {
+        patient: Number(data.patient),
+        reason: data.reason || null,
+        form: Number(data.form),
+        therapy: data.therapy || null,
+        form_pjl: data.form_pjl || null,
+        local_status: data.local_status || null,
+        thigh_defect: data.thigh_defect || null,
+        shin_defect: data.shin_defect || null,
+        therapy_option: data.therapy_option || null
+      };
+      
+      const response = await axiosInstance.put(`/treatments/${id}/`, requestData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteTreatment(id) {
+    try {
+      await axiosInstance.delete(`/treatments/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+  async createArthroplastyForm(data) {
+  try {
+    const response = await axiosInstance.post('/arthroplasty_form/', data);
+    return response.data;
+  } catch (error) {
+    throw this.handleError(error);
+  }
+}
+
+  // Surgical Intervention methods
+  async getSurgicalInterventions() {
+    try {
+      const response = await axiosInstance.get('/treatments/surgical-interventions/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getSurgicalIntervention(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/surgical-interventions/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createSurgicalIntervention(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/surgical-interventions/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateSurgicalIntervention(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/surgical-interventions/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteSurgicalIntervention(id) {
+    try {
+      await axiosInstance.delete(`/treatments/surgical-interventions/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getOperationStages() {
+    try {
+      const response = await axiosInstance.get('/treatments/operations-stages/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Analysis methods
+  async getAnalysisDatas() {
+    try {
+      const response = await axiosInstance.get('/treatments/analysis-datas/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getAnalysisData(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/analysis-datas/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createAnalysisData(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/analysis-datas/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateAnalysisData(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/analysis-datas/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteAnalysisData(id) {
+    try {
+      await axiosInstance.delete(`/treatments/analysis-datas/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Treatment Outcomes methods
+  async getTreatmentOutcomes() {
+    try {
+      const response = await axiosInstance.get('/treatments/outcome/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getTreatmentOutcome(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/outcome/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createTreatmentOutcome(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/outcome/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateTreatmentOutcome(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/outcome/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteTreatmentOutcome(id) {
+    try {
+      await axiosInstance.delete(`/treatments/outcome/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Arthroplasty methods
+  async getArthroplastyForm(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/arthroplasty_form/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getReasons() {
+    try {
+      const response = await axiosInstance.get('/treatments/reasons/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getArthroplastyForms() {
+    try {
+      const response = await axiosInstance.get('/treatments/arthroplasty_form/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getPjlTypes() {
+    try {
+      const response = await axiosInstance.get('/treatments/pjl_types/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getLocalStatuses() {
+    try {
+      const response = await axiosInstance.get('/treatments/local_statuses/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getAoriDefects() {
+    try {
+      const response = await axiosInstance.get('/treatments/aori_defects/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getTreatmentOptions() {
+    try {
+      const response = await axiosInstance.get('/treatments/treatment_options/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
 
   handleError(error) {

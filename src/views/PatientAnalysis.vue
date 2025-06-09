@@ -1,5 +1,6 @@
 <template>
-  <div class="prosthesis-detail-page">
+  <div class="analysis-page">
+    <!-- Шапка (остается без изменений) -->
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -11,12 +12,12 @@
     <div class="content">
       <div class="sidebar">
         <div class="menu-item" @click="goToPatient">Пациент</div>
-        <div class="menu-item active">Протез</div>
+        <div class="menu-item" @click="goToProsthesis">Протез</div>
         <div class="menu-item" @click="goToTreatment">Лечение</div>
         <div class="menu-item" @click="goToComorbidPathologies">Коморбидные патологии</div>
         <div class="menu-item" @click="goToMicroflora">Микрофлора</div>
         <div class="menu-item" @click="goToOperations">Операции</div>
-        <div class="menu-item" @click="goToAnalysis">Анализы</div>
+        <div class="menu-item active">Анализы</div>
         <div class="menu-item" @click="goToOutcomes">Итоги лечения</div>
         
         <button class="back-btn" @click="goBack">
@@ -30,7 +31,7 @@
           <input 
             type="text" 
             v-model="searchQuery" 
-            placeholder="Поиск по типу, производителю, партии или дате" 
+            placeholder="Поиск по анализам" 
             class="search-input"
             @input="handleSearch"
           >
@@ -48,41 +49,41 @@
           </button>
         </div>
         
-        <div class="prosthesis-actions">
+        <div class="analysis-actions">
           <button class="add-btn" @click="startAdding">
             <svg width="16" height="16" viewBox="0 0 24 24">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
             </svg>
-            Добавить протез
+            Добавить анализы
           </button>
         </div>
         
-        <div v-if="loading" class="loading">Загрузка данных протезов...</div>
+        <div v-if="loading" class="loading">Загрузка данных анализов...</div>
         <div v-else-if="error" class="error">{{ error }}</div>
         
-        <div v-else class="prosthesis-list">
-          <div v-if="filteredProstheses.length === 0" class="no-prosthesis">
+        <div v-else class="analysis-list">
+          <div v-if="filteredAnalysis.length === 0" class="no-analysis">
             <h2 v-if="searchQuery">Ничего не найдено</h2>
-            <h2 v-else>Данные о протезах отсутствуют</h2>
+            <h2 v-else>Данные анализов отсутствуют</h2>
             <p v-if="searchQuery">Попробуйте изменить параметры поиска</p>
-            <p v-else>Для этого пациента нет информации о протезах.</p>
+            <p v-else>Для этого пациента нет информации об анализах.</p>
           </div>
           
           <div 
-            v-for="(prosthesis, index) in filteredProstheses" 
-            :key="prosthesis.id" 
-            class="prosthesis-item"
+            v-for="(analysis, index) in filteredAnalysis" 
+            :key="analysis.id" 
+            class="analysis-item"
           >
-            <div class="prosthesis-header">
-              <h3>Протез #{{ index + 1 }}</h3>
-              <div class="prosthesis-actions">
-                <button class="edit-btn" @click="startEditing(prosthesis)">
+            <div class="analysis-header">
+              <h3>Анализы #{{ index + 1 }}</h3>
+              <div class="analysis-actions">
+                <button class="edit-btn" @click="startEditing(analysis)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
                   </svg>
                   Редактировать
                 </button>
-                <button class="delete-btn" @click="confirmDelete(prosthesis.id)">
+                <button class="delete-btn" @click="confirmDelete(analysis.id)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                   </svg>
@@ -92,90 +93,54 @@
             </div>
             
             <div class="info-row">
-              <div class="info-label">Вид:</div>
-              <div class="info-value">{{ getProsthesisTypeName(prosthesis.type) || 'Не указано' }}</div>
+              <div class="info-label">КАК:</div>
+              <div class="info-value">{{ analysis.KAK || 'Не указано' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Производитель:</div>
-              <div class="info-value">{{ getProsthesisVendorName(prosthesis.vendor) || 'Не указано' }}</div>
+              <div class="info-label">ВКАК:</div>
+              <div class="info-value">{{ analysis.VKAK || 'Не указано' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Партия:</div>
-              <div class="info-value">{{ prosthesis.batch || 'Не указано' }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">Дата установки:</div>
-              <div class="info-value">{{ formatDate(prosthesis.date) || 'Не указана' }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">Форма:</div>
-              <div class="info-value">{{ getProsthesisFormName(prosthesis.form) || 'Не указано' }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">Стабильность:</div>
-              <div class="info-value">{{ prosthesisStabilityName(prosthesis.stable) || 'Не указана' }}</div>
+              <div class="info-label">Анализ мочи:</div>
+              <div class="info-value">{{ analysis.urine_test || 'Не указано' }}</div>
             </div>
           </div>
         </div>
-
+        
+        <!-- Модальное окно редактирования/добавления -->
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
-            <h2>{{ editingProsthesisId ? 'Редактирование протеза' : 'Добавление нового протеза' }}</h2>
+            <h2>{{ editingAnalysisId ? 'Редактирование анализов' : 'Добавление анализов' }}</h2>
             
             <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-group">
-                <label for="type">Вид эндопротеза *</label>
-                <select id="type" v-model="editForm.type" required>
-                  <option value="" disabled>Выберите вид</option>
-                  <option v-for="type in prosthesisTypes" 
-                          :key="type.id" 
-                          :value="type.id">
-                    {{ type.name }}
-                  </option>
-                </select>
+                <label for="KAK">КАК</label>
+                <input 
+                  id="KAK" 
+                  v-model="editForm.KAK" 
+                  type="text" 
+                  placeholder="Введите данные КАК"
+                >
               </div>
               
               <div class="form-group">
-                <label for="vendor">Производитель</label>
-                <select id="vendor" v-model="editForm.vendor">
-                  <option value="" disabled>Выберите производителя</option>
-                  <option v-for="vendor in prosthesisVendors" 
-                          :key="vendor.id" 
-                          :value="vendor.id">
-                    {{ vendor.name }}
-                  </option>
-                </select>
+                <label for="VKAK">ВКАК</label>
+                <input 
+                  id="VKAK" 
+                  v-model="editForm.VKAK" 
+                  type="text" 
+                  placeholder="Введите данные ВКАК"
+                >
               </div>
               
               <div class="form-group">
-                <label for="batch">Партия</label>
-                <input id="batch" v-model="editForm.batch" type="text" placeholder="Введите номер партии">
-              </div>
-              
-              <div class="form-group">
-                <label for="date">Дата установки *</label>
-                <input id="date" v-model="editForm.date" type="date" required>
-              </div>
-              
-              <div class="form-group">
-                <label for="form">Форма</label>
-                <select id="form" v-model="editForm.form">
-                  <option value="" disabled>Выберите форму</option>
-                  <option v-for="form in prosthesisForms" 
-                          :key="form.id" 
-                          :value="form.id">
-                    {{ form.name }}
-                  </option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label for="stable">Стабильность *</label>
-                <select id="stable" v-model="editForm.stable" required>
-                  <option value="" disabled>Выберите стабильность</option>
-                  <option :value="true">Стабилен</option>
-                  <option :value="false">Нестабилен</option>
-                </select>
+                <label for="urine_test">Анализ мочи</label>
+                <input 
+                  id="urine_test" 
+                  v-model="editForm.urine_test" 
+                  type="text" 
+                  placeholder="Введите данные анализа мочи"
+                >
               </div>
               
               <div class="form-actions">
@@ -198,7 +163,7 @@ import authService from '@/services/auth.service';
 import debounce from 'lodash/debounce';
 
 export default {
-  name: 'PatientProtes',
+  name: 'PatientAnalysis',
   props: {
     patientId: {
       type: [String, Number],
@@ -207,40 +172,31 @@ export default {
   },
   data() {
     return {
-      prostheses: [],
+      analysis: [],
       loading: true,
       error: null,
       isEditing: false,
-      editingProsthesisId: null,
+      editingAnalysisId: null,
       saving: false,
       searchQuery: '',
       editForm: {
-        type: '',
-        vendor: '',
-        batch: '',
-        date: '',
-        form: '',
-        stable: '',
-        patient: null
-      },
-      prosthesisTypes: [],
-      prosthesisVendors: [],
-      prosthesisForms: []
+        treatment: null,
+        KAK: '',
+        VKAK: '',
+        urine_test: ''
+      }
     };
   },
   computed: {
-    filteredProstheses() {
-      if (!this.searchQuery) return this.prostheses;
+    filteredAnalysis() {
+      if (!this.searchQuery) return this.analysis;
       
       const query = this.searchQuery.toLowerCase();
-      return this.prostheses.filter(prosthesis => {
+      return this.analysis.filter(analysis => {
         return (
-          (prosthesis.batch && prosthesis.batch.toLowerCase().includes(query)) ||
-          (this.getProsthesisTypeName(prosthesis.type) && 
-            this.getProsthesisTypeName(prosthesis.type).toLowerCase().includes(query)) ||
-          (this.getProsthesisVendorName(prosthesis.vendor) && 
-            this.getProsthesisVendorName(prosthesis.vendor).toLowerCase().includes(query)) ||
-          (prosthesis.date && this.formatDate(prosthesis.date).toLowerCase().includes(query))
+          (analysis.KAK && analysis.KAK.toLowerCase().includes(query)) ||
+          (analysis.VKAK && analysis.VKAK.toLowerCase().includes(query)) ||
+          (analysis.urine_test && analysis.urine_test.toLowerCase().includes(query))
         );
       });
     }
@@ -248,32 +204,36 @@ export default {
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
     
-    async loadReferenceData() {
+    async fetchTreatmentId() {
       try {
-        const [types, vendors, forms] = await Promise.all([
-          authService.getProsthesisTypes(),
-          authService.getProsthesisVendors(),
-          authService.getProsthesisForms()
-        ]);
-        
-        this.prosthesisTypes = types;
-        this.prosthesisVendors = vendors;
-        this.prosthesisForms = forms;
+        const treatments = await authService.getTreatments();
+        const patientTreatment = treatments.find(t => String(t.patient) === String(this.patientId));
+        if (patientTreatment) {
+          this.editForm.treatment = patientTreatment.id;
+          return patientTreatment.id;
+        }
+        return null;
       } catch (error) {
-        console.error('Ошибка загрузки справочных данных:', error);
-        this.error = 'Ошибка загрузки справочных данных';
+        console.error('Ошибка загрузки данных о лечении:', error);
+        return null;
       }
     },
     
-    async fetchProstheses() {
+    async fetchAnalysis() {
       this.loading = true;
       this.error = null;
       
       try {
-        const response = await authService.getProstheses();
-        this.prostheses = response.filter(p => String(p.patient) === String(this.patientId));
+        const treatmentId = await this.fetchTreatmentId();
+        if (!treatmentId) {
+          this.analysis = [];
+          return;
+        }
+        
+        const response = await authService.getAnalysisDatas();
+        this.analysis = response.filter(a => a.treatment === treatmentId);
       } catch (error) {
-        console.error('Ошибка загрузки данных протезов:', error);
+        console.error('Ошибка загрузки данных анализов:', error);
         this.error = error.response?.data?.message || error.message || 'Ошибка загрузки данных';
         
         if (error.response?.status === 401) {
@@ -284,90 +244,49 @@ export default {
       }
     },
     
-    getProsthesisTypeName(typeId) {
-      const type = this.prosthesisTypes.find(t => t.id === typeId);
-      return type ? type.name : null;
-    },
-    
-    getProsthesisVendorName(vendorId) {
-      const vendor = this.prosthesisVendors.find(v => v.id === vendorId);
-      return vendor ? vendor.name : null;
-    },
-    
-    getProsthesisFormName(formId) {
-      const form = this.prosthesisForms.find(f => f.id === formId);
-      return form ? form.name : null;
-    },
-    
-    prosthesisStabilityName(stable) {
-      if (stable === true) return 'Стабилен';
-      if (stable === false) return 'Нестабилен';
-      return null;
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return null;
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ru-RU');
-    },
-    
     startAdding() {
       this.editForm = {
-        type: '',
-        vendor: '',
-        batch: '',
-        date: '',
-        form: '',
-        stable: '',
-        patient: this.patientId
+        treatment: this.editForm.treatment,
+        KAK: '',
+        VKAK: '',
+        urine_test: ''
       };
-      this.editingProsthesisId = null;
+      this.editingAnalysisId = null;
       this.isEditing = true;
     },
     
-    startEditing(prosthesis) {
+    startEditing(analysis) {
       this.editForm = {
-        type: prosthesis.type,
-        vendor: prosthesis.vendor,
-        batch: prosthesis.batch,
-        date: prosthesis.date ? prosthesis.date.split('T')[0] : '',
-        form: prosthesis.form,
-        stable: prosthesis.stable,
-        patient: this.patientId
+        treatment: analysis.treatment,
+        KAK: analysis.KAK || '',
+        VKAK: analysis.VKAK || '',
+        urine_test: analysis.urine_test || ''
       };
-      this.editingProsthesisId = prosthesis.id;
+      this.editingAnalysisId = analysis.id;
       this.isEditing = true;
     },
     
     async saveChanges() {
-      if (!this.editForm.type || !this.editForm.date || this.editForm.stable === '') {
-        this.error = 'Заполните все обязательные поля (Тип, Дата установки, Стабильность)';
-        return;
-      }
-
       this.saving = true;
       this.error = null;
 
       try {
-        const prosthesisData = {
-          type: this.editForm.type,
-          vendor: this.editForm.vendor || null,
-          batch: this.editForm.batch || null,
-          date: this.editForm.date,
-          form: this.editForm.form || null,
-          stable: Boolean(this.editForm.stable),
-          patient: this.patientId
+        const analysisData = {
+          treatment: this.editForm.treatment,
+          KAK: this.editForm.KAK || null,
+          VKAK: this.editForm.VKAK || null,
+          urine_test: this.editForm.urine_test || null
         };
 
-        if (this.editingProsthesisId) {
-          const updated = await authService.updateProsthesis(this.editingProsthesisId, prosthesisData);
-          const index = this.prostheses.findIndex(p => p.id === this.editingProsthesisId);
-          this.prostheses.splice(index, 1, updated);
-          this.showSuccessMessage('Данные протеза успешно обновлены');
+        if (this.editingAnalysisId) {
+          const updated = await authService.updateAnalysisData(this.editingAnalysisId, analysisData);
+          const index = this.analysis.findIndex(a => a.id === this.editingAnalysisId);
+          this.analysis.splice(index, 1, updated);
+          this.showSuccessMessage('Данные анализов успешно обновлены');
         } else {
-          const created = await authService.createProsthesis(prosthesisData);
-          this.prostheses.push(created);
-          this.showSuccessMessage('Данные протеза успешно сохранены');
+          const created = await authService.createAnalysisData(analysisData);
+          this.analysis.push(created);
+          this.showSuccessMessage('Данные анализов успешно сохранены');
         }
 
         this.isEditing = false;
@@ -388,11 +307,11 @@ export default {
     },
     
     async confirmDelete(id) {
-      if (confirm('Вы уверены, что хотите удалить этот протез?')) {
+      if (confirm('Вы уверены, что хотите удалить эти данные анализов?')) {
         try {
-          await authService.deleteProsthesis(id);
-          this.prostheses = this.prostheses.filter(p => p.id !== id);
-          this.showSuccessMessage('Протез успешно удален');
+          await authService.deleteAnalysisData(id);
+          this.analysis = this.analysis.filter(a => a.id !== id);
+          this.showSuccessMessage('Данные анализов успешно удалены');
         } catch (error) {
           console.error('Ошибка удаления:', error);
           this.error = error.response?.data?.message || error.message || 'Ошибка при удалении';
@@ -401,6 +320,7 @@ export default {
     },
     
     handleSearch: debounce(function() {
+      // Логика поиска реализована в computed-свойстве filteredAnalysis
     }, 300),
     
     clearSearch() {
@@ -421,6 +341,10 @@ export default {
     
     goToComorbidPathologies() {
       this.$router.push({ name: 'PatientComorbidPathologies', params: { id: this.patientId } });
+    },
+    
+    goToMicroflora() {
+      this.$router.push({ name: 'PatientMicroflora', params: { id: this.patientId } });
     },
     
     goToOperations() {
@@ -446,15 +370,15 @@ export default {
     }
   },
   async created() {
-    await this.loadReferenceData();
-    await this.fetchProstheses();
+    await this.fetchTreatmentId();
+    await this.fetchAnalysis();
   },
   watch: {
     patientId: {
       immediate: true,
       handler(newVal) {
         if (newVal) {
-          this.fetchProstheses();
+          this.fetchAnalysis();
         }
       }
     }
@@ -463,7 +387,7 @@ export default {
 </script>
 
 <style scoped>
-.prosthesis-detail-page {
+.analysis-page {
   font-family: "JetBrains Mono", Helvetica, Arial, sans-serif;
   min-height: 100vh;
   display: flex;
@@ -601,7 +525,7 @@ export default {
   cursor: pointer;
 }
 
-.prosthesis-actions {
+.analysis-actions {
   margin-bottom: 30px;
 }
 
@@ -633,47 +557,47 @@ export default {
   color: #ff4444;
 }
 
-.no-prosthesis {
+.no-analysis {
   text-align: center;
   padding: 40px 20px;
 }
 
-.no-prosthesis h2 {
+.no-analysis h2 {
   color: #333;
   margin-bottom: 10px;
 }
 
-.no-prosthesis p {
+.no-analysis p {
   color: #666;
   margin-bottom: 20px;
 }
 
-.prosthesis-list {
+.analysis-list {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.prosthesis-item {
+.analysis-item {
   border: 1px solid #e6eec6;
   border-radius: 8px;
   padding: 20px;
 }
 
-.prosthesis-header {
+.analysis-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
 }
 
-.prosthesis-header h3 {
+.analysis-header h3 {
   margin: 0;
   color: #333;
 }
 
-.prosthesis-actions {
+.analysis-actions {
   display: flex;
   gap: 10px;
   margin: 0;
@@ -731,6 +655,7 @@ export default {
   color: #333;
 }
 
+/* Модальное окно */
 .modal-overlay {
   position: fixed;
   top: 0;

@@ -1,5 +1,5 @@
 <template>
-  <div class="prosthesis-detail-page">
+  <div class="outcomes-page">
     <div class="header">
       <div class="header-content">
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
@@ -11,13 +11,13 @@
     <div class="content">
       <div class="sidebar">
         <div class="menu-item" @click="goToPatient">Пациент</div>
-        <div class="menu-item active">Протез</div>
+        <div class="menu-item" @click="goToProsthesis">Протез</div>
         <div class="menu-item" @click="goToTreatment">Лечение</div>
         <div class="menu-item" @click="goToComorbidPathologies">Коморбидные патологии</div>
         <div class="menu-item" @click="goToMicroflora">Микрофлора</div>
         <div class="menu-item" @click="goToOperations">Операции</div>
         <div class="menu-item" @click="goToAnalysis">Анализы</div>
-        <div class="menu-item" @click="goToOutcomes">Итоги лечения</div>
+        <div class="menu-item active">Итоги лечения</div>
         
         <button class="back-btn" @click="goBack">
           <span class="back-icon">←</span>
@@ -30,7 +30,7 @@
           <input 
             type="text" 
             v-model="searchQuery" 
-            placeholder="Поиск по типу, производителю, партии или дате" 
+            placeholder="Поиск по результату или дате" 
             class="search-input"
             @input="handleSearch"
           >
@@ -48,41 +48,41 @@
           </button>
         </div>
         
-        <div class="prosthesis-actions">
+        <div class="outcomes-actions">
           <button class="add-btn" @click="startAdding">
             <svg width="16" height="16" viewBox="0 0 24 24">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
             </svg>
-            Добавить протез
+            Добавить итоги лечения
           </button>
         </div>
         
-        <div v-if="loading" class="loading">Загрузка данных протезов...</div>
+        <div v-if="loading" class="loading">Загрузка данных об итогах лечения...</div>
         <div v-else-if="error" class="error">{{ error }}</div>
         
-        <div v-else class="prosthesis-list">
-          <div v-if="filteredProstheses.length === 0" class="no-prosthesis">
+        <div v-else class="outcomes-list">
+          <div v-if="filteredOutcomes.length === 0" class="no-outcomes">
             <h2 v-if="searchQuery">Ничего не найдено</h2>
-            <h2 v-else>Данные о протезах отсутствуют</h2>
+            <h2 v-else>Данные об итогах лечения отсутствуют</h2>
             <p v-if="searchQuery">Попробуйте изменить параметры поиска</p>
-            <p v-else>Для этого пациента нет информации о протезах.</p>
+            <p v-else>Для этого пациента нет информации об итогах лечения.</p>
           </div>
           
           <div 
-            v-for="(prosthesis, index) in filteredProstheses" 
-            :key="prosthesis.id" 
-            class="prosthesis-item"
+            v-for="(outcome, index) in filteredOutcomes" 
+            :key="outcome.id" 
+            class="outcome-item"
           >
-            <div class="prosthesis-header">
-              <h3>Протез #{{ index + 1 }}</h3>
-              <div class="prosthesis-actions">
-                <button class="edit-btn" @click="startEditing(prosthesis)">
+            <div class="outcome-header">
+              <h3>Итоги лечения #{{ index + 1 }}</h3>
+              <div class="outcome-actions">
+                <button class="edit-btn" @click="startEditing(outcome)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
                   </svg>
                   Редактировать
                 </button>
-                <button class="delete-btn" @click="confirmDelete(prosthesis.id)">
+                <button class="delete-btn" @click="confirmDelete(outcome.id)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                   </svg>
@@ -92,89 +92,86 @@
             </div>
             
             <div class="info-row">
-              <div class="info-label">Вид:</div>
-              <div class="info-value">{{ getProsthesisTypeName(prosthesis.type) || 'Не указано' }}</div>
+              <div class="info-label">Результат лечения:</div>
+              <div class="info-value">{{ outcome.result || 'Не указано' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Производитель:</div>
-              <div class="info-value">{{ getProsthesisVendorName(prosthesis.vendor) || 'Не указано' }}</div>
+              <div class="info-label">Артодез:</div>
+              <div class="info-value">{{ outcome.artodesis || 'Не указано' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Партия:</div>
-              <div class="info-value">{{ prosthesis.batch || 'Не указано' }}</div>
+              <div class="info-label">Повторная ревизия:</div>
+              <div class="info-value">{{ outcome.re_audit || 'Не указано' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Дата установки:</div>
-              <div class="info-value">{{ formatDate(prosthesis.date) || 'Не указана' }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">Форма:</div>
-              <div class="info-value">{{ getProsthesisFormName(prosthesis.form) || 'Не указано' }}</div>
-            </div>
-            <div class="info-row">
-              <div class="info-label">Стабильность:</div>
-              <div class="info-value">{{ prosthesisStabilityName(prosthesis.stable) || 'Не указана' }}</div>
+              <div class="info-label">Исход:</div>
+              <div class="info-value">{{ outcome.outcome || 'Не указано' }}</div>
             </div>
           </div>
         </div>
 
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
-            <h2>{{ editingProsthesisId ? 'Редактирование протеза' : 'Добавление нового протеза' }}</h2>
+            <h2>{{ editingOutcomeId ? 'Редактирование данных' : 'Добавление данных' }}</h2>
             
             <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-group">
-                <label for="type">Вид эндопротеза *</label>
-                <select id="type" v-model="editForm.type" required>
-                  <option value="" disabled>Выберите вид</option>
-                  <option v-for="type in prosthesisTypes" 
-                          :key="type.id" 
-                          :value="type.id">
-                    {{ type.name }}
-                  </option>
+                <label for="result">Результат лечения *</label>
+                <select 
+                  id="result" 
+                  v-model="editForm.result" 
+                  required
+                >
+                  <option value="" disabled>Выберите результат</option>
+                  <option value="купирование">Купирование</option>
+                  <option value="рецидив">Рецидив</option>
                 </select>
               </div>
               
               <div class="form-group">
-                <label for="vendor">Производитель</label>
-                <select id="vendor" v-model="editForm.vendor">
-                  <option value="" disabled>Выберите производителя</option>
-                  <option v-for="vendor in prosthesisVendors" 
-                          :key="vendor.id" 
-                          :value="vendor.id">
-                    {{ vendor.name }}
-                  </option>
+                <label for="artodesis">Артодез</label>
+                <select 
+                  id="artodesis" 
+                  v-model="editForm.artodesis" 
+                >
+                  <option value="" disabled>Выберите вариант</option>
+                  <option value="есть сращение">Есть сращение</option>
+                  <option value="нет сращения">Нет сращения</option>
+                  <option value="нет данных">Нет данных</option>
                 </select>
               </div>
               
               <div class="form-group">
-                <label for="batch">Партия</label>
-                <input id="batch" v-model="editForm.batch" type="text" placeholder="Введите номер партии">
-              </div>
-              
-              <div class="form-group">
-                <label for="date">Дата установки *</label>
-                <input id="date" v-model="editForm.date" type="date" required>
-              </div>
-              
-              <div class="form-group">
-                <label for="form">Форма</label>
-                <select id="form" v-model="editForm.form">
-                  <option value="" disabled>Выберите форму</option>
-                  <option v-for="form in prosthesisForms" 
-                          :key="form.id" 
-                          :value="form.id">
-                    {{ form.name }}
-                  </option>
+                <label for="re_audit">Повторная ревизия *</label>
+                <select 
+                  id="re_audit" 
+                  v-model="editForm.re_audit" 
+                  required
+                >
+                  <option value="" disabled>Выберите вариант</option>
+                  <option value="нет">Нет</option>
+                  <option value="дебридмент">Дебридмент</option>
+                  <option value="одноэтапное">Одноэтапное</option>
+                  <option value="двухэтапное">Двухэтапное</option>
+                  <option value="артродез">Артродез</option>
+                  <option value="ампутация">Ампутация</option>
                 </select>
               </div>
               
               <div class="form-group">
-                <label for="stable">Стабильность *</label>
-                <select id="stable" v-model="editForm.stable" required>
-                  <option value="" disabled>Выберите стабильность</option>
-                  <option :value="true">Стабилен</option>
-                  <option :value="false">Нестабилен</option>
+                <label for="outcome">Исход *</label>
+                <select 
+                  id="outcome" 
+                  v-model="editForm.outcome" 
+                  required
+                >
+                  <option value="" disabled>Выберите исход</option>
+                  <option value="ВСЕ ОК">Лечение прошло успешно</option>
+                  <option value="смерть на фоне СЕПСИСА">Смерть на фоне сепсиса</option>
+                  <option value="смерть на фоне ДРУГИХ проблем">Смерть на фоне других проблем</option>
+                  <option value="нет связи с больным">Нет связи с больным</option>
+                  <option value="ампутация по месту жительства">Ампутация по месту жительства</option>
+                  <option value="рецидив">Рецидив</option>
                 </select>
               </div>
               
@@ -198,7 +195,7 @@ import authService from '@/services/auth.service';
 import debounce from 'lodash/debounce';
 
 export default {
-  name: 'PatientProtes',
+  name: 'PatientOutcomes',
   props: {
     patientId: {
       type: [String, Number],
@@ -207,40 +204,33 @@ export default {
   },
   data() {
     return {
-      prostheses: [],
+      outcomes: [],
       loading: true,
       error: null,
       isEditing: false,
-      editingProsthesisId: null,
+      editingOutcomeId: null,
       saving: false,
       searchQuery: '',
       editForm: {
-        type: '',
-        vendor: '',
-        batch: '',
-        date: '',
-        form: '',
-        stable: '',
-        patient: null
-      },
-      prosthesisTypes: [],
-      prosthesisVendors: [],
-      prosthesisForms: []
+        result: '',
+        artodesis: '',
+        re_audit: '',
+        outcome: '',
+        treatment: null
+      }
     };
   },
   computed: {
-    filteredProstheses() {
-      if (!this.searchQuery) return this.prostheses;
+    filteredOutcomes() {
+      if (!this.searchQuery) return this.outcomes;
       
       const query = this.searchQuery.toLowerCase();
-      return this.prostheses.filter(prosthesis => {
+      return this.outcomes.filter(outcome => {
         return (
-          (prosthesis.batch && prosthesis.batch.toLowerCase().includes(query)) ||
-          (this.getProsthesisTypeName(prosthesis.type) && 
-            this.getProsthesisTypeName(prosthesis.type).toLowerCase().includes(query)) ||
-          (this.getProsthesisVendorName(prosthesis.vendor) && 
-            this.getProsthesisVendorName(prosthesis.vendor).toLowerCase().includes(query)) ||
-          (prosthesis.date && this.formatDate(prosthesis.date).toLowerCase().includes(query))
+          (outcome.result && outcome.result.toLowerCase().includes(query)) ||
+          (outcome.artodesis && outcome.artodesis.toLowerCase().includes(query)) ||
+          (outcome.re_audit && outcome.re_audit.toLowerCase().includes(query)) ||
+          (outcome.outcome && outcome.outcome.toLowerCase().includes(query))
         );
       });
     }
@@ -248,32 +238,36 @@ export default {
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
     
-    async loadReferenceData() {
+    async fetchTreatmentId() {
       try {
-        const [types, vendors, forms] = await Promise.all([
-          authService.getProsthesisTypes(),
-          authService.getProsthesisVendors(),
-          authService.getProsthesisForms()
-        ]);
-        
-        this.prosthesisTypes = types;
-        this.prosthesisVendors = vendors;
-        this.prosthesisForms = forms;
+        const treatments = await authService.getTreatments();
+        const patientTreatment = treatments.find(t => String(t.patient) === String(this.patientId));
+        if (patientTreatment) {
+          return patientTreatment.id;
+        }
+        return null;
       } catch (error) {
-        console.error('Ошибка загрузки справочных данных:', error);
-        this.error = 'Ошибка загрузки справочных данных';
+        console.error('Ошибка загрузки данных о лечении:', error);
+        return null;
       }
     },
     
-    async fetchProstheses() {
+    async fetchOutcomes() {
       this.loading = true;
       this.error = null;
       
       try {
-        const response = await authService.getProstheses();
-        this.prostheses = response.filter(p => String(p.patient) === String(this.patientId));
+        const treatmentId = await this.fetchTreatmentId();
+        if (!treatmentId) {
+          this.outcomes = [];
+          return;
+        }
+        
+        const response = await authService.getTreatmentOutcomes();
+        this.outcomes = response.filter(o => o.treatment === treatmentId);
+        this.editForm.treatment = treatmentId;
       } catch (error) {
-        console.error('Ошибка загрузки данных протезов:', error);
+        console.error('Ошибка загрузки данных об итогах лечения:', error);
         this.error = error.response?.data?.message || error.message || 'Ошибка загрузки данных';
         
         if (error.response?.status === 401) {
@@ -284,64 +278,33 @@ export default {
       }
     },
     
-    getProsthesisTypeName(typeId) {
-      const type = this.prosthesisTypes.find(t => t.id === typeId);
-      return type ? type.name : null;
-    },
-    
-    getProsthesisVendorName(vendorId) {
-      const vendor = this.prosthesisVendors.find(v => v.id === vendorId);
-      return vendor ? vendor.name : null;
-    },
-    
-    getProsthesisFormName(formId) {
-      const form = this.prosthesisForms.find(f => f.id === formId);
-      return form ? form.name : null;
-    },
-    
-    prosthesisStabilityName(stable) {
-      if (stable === true) return 'Стабилен';
-      if (stable === false) return 'Нестабилен';
-      return null;
-    },
-    
-    formatDate(dateString) {
-      if (!dateString) return null;
-      const date = new Date(dateString);
-      return date.toLocaleDateString('ru-RU');
-    },
-    
     startAdding() {
       this.editForm = {
-        type: '',
-        vendor: '',
-        batch: '',
-        date: '',
-        form: '',
-        stable: '',
-        patient: this.patientId
+        result: '',
+        artodesis: '',
+        re_audit: '',
+        outcome: '',
+        treatment: this.editForm.treatment
       };
-      this.editingProsthesisId = null;
+      this.editingOutcomeId = null;
       this.isEditing = true;
     },
     
-    startEditing(prosthesis) {
+    startEditing(outcome) {
       this.editForm = {
-        type: prosthesis.type,
-        vendor: prosthesis.vendor,
-        batch: prosthesis.batch,
-        date: prosthesis.date ? prosthesis.date.split('T')[0] : '',
-        form: prosthesis.form,
-        stable: prosthesis.stable,
-        patient: this.patientId
+        result: outcome.result,
+        artodesis: outcome.artodesis,
+        re_audit: outcome.re_audit,
+        outcome: outcome.outcome,
+        treatment: outcome.treatment
       };
-      this.editingProsthesisId = prosthesis.id;
+      this.editingOutcomeId = outcome.id;
       this.isEditing = true;
     },
     
     async saveChanges() {
-      if (!this.editForm.type || !this.editForm.date || this.editForm.stable === '') {
-        this.error = 'Заполните все обязательные поля (Тип, Дата установки, Стабильность)';
+      if (!this.editForm.result || !this.editForm.re_audit || !this.editForm.outcome) {
+        this.error = 'Заполните все обязательные поля';
         return;
       }
 
@@ -349,25 +312,27 @@ export default {
       this.error = null;
 
       try {
-        const prosthesisData = {
-          type: this.editForm.type,
-          vendor: this.editForm.vendor || null,
-          batch: this.editForm.batch || null,
-          date: this.editForm.date,
-          form: this.editForm.form || null,
-          stable: Boolean(this.editForm.stable),
-          patient: this.patientId
+        const outcomeData = {
+          result: this.editForm.result,
+          artodesis: this.editForm.artodesis || null,
+          re_audit: this.editForm.re_audit,
+          outcome: this.editForm.outcome,
+          treatment: this.editForm.treatment
         };
 
-        if (this.editingProsthesisId) {
-          const updated = await authService.updateProsthesis(this.editingProsthesisId, prosthesisData);
-          const index = this.prostheses.findIndex(p => p.id === this.editingProsthesisId);
-          this.prostheses.splice(index, 1, updated);
-          this.showSuccessMessage('Данные протеза успешно обновлены');
+        if (!outcomeData.treatment) {
+          throw new Error('Необходимо указать лечение пациента');
+        }
+
+        if (this.editingOutcomeId) {
+          const updated = await authService.updateTreatmentOutcome(this.editingOutcomeId, outcomeData);
+          const index = this.outcomes.findIndex(o => o.id === this.editingOutcomeId);
+          this.outcomes.splice(index, 1, updated);
+          this.showSuccessMessage('Данные об итогах лечения успешно обновлены');
         } else {
-          const created = await authService.createProsthesis(prosthesisData);
-          this.prostheses.push(created);
-          this.showSuccessMessage('Данные протеза успешно сохранены');
+          const created = await authService.createTreatmentOutcome(outcomeData);
+          this.outcomes.push(created);
+          this.showSuccessMessage('Данные об итогах лечения успешно сохранены');
         }
 
         this.isEditing = false;
@@ -379,25 +344,25 @@ export default {
       }
     },
     
+    async confirmDelete(id) {
+      if (confirm('Вы уверены, что хотите удалить данные об итогах лечения?')) {
+        try {
+          await authService.deleteTreatmentOutcome(id);
+          this.outcomes = this.outcomes.filter(o => o.id !== id);
+          this.showSuccessMessage('Данные об итогах лечения успешно удалены');
+        } catch (error) {
+          console.error('Ошибка удаления:', error);
+          this.error = error.response?.data?.message || error.message || 'Ошибка при удалении';
+        }
+      }
+    },
+    
     showSuccessMessage(message) {
       alert(message);
     },
     
     cancelEditing() {
       this.isEditing = false;
-    },
-    
-    async confirmDelete(id) {
-      if (confirm('Вы уверены, что хотите удалить этот протез?')) {
-        try {
-          await authService.deleteProsthesis(id);
-          this.prostheses = this.prostheses.filter(p => p.id !== id);
-          this.showSuccessMessage('Протез успешно удален');
-        } catch (error) {
-          console.error('Ошибка удаления:', error);
-          this.error = error.response?.data?.message || error.message || 'Ошибка при удалении';
-        }
-      }
     },
     
     handleSearch: debounce(function() {
@@ -423,6 +388,10 @@ export default {
       this.$router.push({ name: 'PatientComorbidPathologies', params: { id: this.patientId } });
     },
     
+    goToMicroflora() {
+      this.$router.push({ name: 'PatientMicroflora', params: { id: this.patientId } });
+    },
+    
     goToOperations() {
       this.$router.push({ name: 'PatientOperations', params: { id: this.patientId } });
     },
@@ -446,15 +415,14 @@ export default {
     }
   },
   async created() {
-    await this.loadReferenceData();
-    await this.fetchProstheses();
+    await this.fetchOutcomes();
   },
   watch: {
     patientId: {
       immediate: true,
       handler(newVal) {
         if (newVal) {
-          this.fetchProstheses();
+          this.fetchOutcomes();
         }
       }
     }
@@ -463,7 +431,7 @@ export default {
 </script>
 
 <style scoped>
-.prosthesis-detail-page {
+.outcomes-page {
   font-family: "JetBrains Mono", Helvetica, Arial, sans-serif;
   min-height: 100vh;
   display: flex;
@@ -601,11 +569,11 @@ export default {
   cursor: pointer;
 }
 
-.prosthesis-actions {
+.outcomes-actions {
   margin-bottom: 30px;
 }
 
-.add-btn {
+.add-btn, .edit-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -619,7 +587,7 @@ export default {
   transition: background 0.2s;
 }
 
-.add-btn:hover {
+.add-btn:hover, .edit-btn:hover {
   background: #7fa11e;
 }
 
@@ -633,86 +601,25 @@ export default {
   color: #ff4444;
 }
 
-.no-prosthesis {
+.no-outcomes {
   text-align: center;
   padding: 40px 20px;
 }
 
-.no-prosthesis h2 {
+.no-outcomes h2 {
   color: #333;
   margin-bottom: 10px;
 }
 
-.no-prosthesis p {
+.no-outcomes p {
   color: #666;
   margin-bottom: 20px;
 }
 
-.prosthesis-list {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.prosthesis-item {
+.outcomes-info {
   border: 1px solid #e6eec6;
   border-radius: 8px;
   padding: 20px;
-}
-
-.prosthesis-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.prosthesis-header h3 {
-  margin: 0;
-  color: #333;
-}
-
-.prosthesis-actions {
-  display: flex;
-  gap: 10px;
-  margin: 0;
-}
-
-.edit-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.edit-btn:hover {
-  background: #7fa11e;
-}
-
-.delete-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.delete-btn:hover {
-  background: #cc0000;
 }
 
 .info-row {
@@ -721,7 +628,7 @@ export default {
 }
 
 .info-label {
-  width: 150px;
+  width: 250px;
   font-weight: 600;
   color: #666;
 }

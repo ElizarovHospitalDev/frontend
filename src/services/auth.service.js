@@ -225,6 +225,71 @@ async getProsthesisForms() {
     }
   }
 
+  async deleteEndoprosthetic(id) {
+    try {
+      const response = await axiosInstance.delete(`/endoprosthetics/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting endoprosthetic:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  async deletePatient(id) {
+    const url = `/treatments/patients/${id}/`;
+    try {
+      console.log('Starting patient deletion process for ID:', id);
+      
+      // First, get all endoprosthetics for this patient
+      const endoprosthetics = await this.getProstheses();
+      console.log('Retrieved endoprosthetics:', endoprosthetics);
+      
+      if (!Array.isArray(endoprosthetics)) {
+        throw new Error('Failed to retrieve endoprosthetics: Invalid response format');
+      }
+      
+      const patientEndoprosthetics = endoprosthetics.filter(ep => {
+        const patientId = typeof ep.patient === 'object' ? ep.patient.id : ep.patient;
+        console.log('Checking endoprosthetic:', {
+          id: ep.id,
+          patientId,
+          targetId: id,
+          matches: patientId === id
+        });
+        return patientId === id;
+      });
+      
+      console.log('Found endoprosthetics for patient:', patientEndoprosthetics);
+      
+      // Delete all related endoprosthetics first
+      for (const ep of patientEndoprosthetics) {
+        console.log(`Attempting to delete endoprosthetic ${ep.id}`);
+        try {
+          await this.deleteEndoprosthetic(ep.id);
+          console.log(`Successfully deleted endoprosthetic ${ep.id}`);
+        } catch (deleteError) {
+          console.error(`Failed to delete endoprosthetic ${ep.id}:`, deleteError);
+          throw new Error(`Failed to delete endoprosthetic ${ep.id}: ${deleteError.message}`);
+        }
+      }
+      
+      // Now delete the patient
+      console.log('All endoprosthetics deleted, proceeding to delete patient');
+      const response = await axiosInstance.delete(url);
+      console.log('Patient deletion successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in deletePatient:', error);
+      if (error.response) {
+        console.error('Server response:', {
+          data: error.response.data,
+          status: error.response.status,
+          headers: error.response.headers
+        });
+      }
+      throw this.handleError(error);
+    }
+  }
 
   async createPatient(patientData) {
     try {

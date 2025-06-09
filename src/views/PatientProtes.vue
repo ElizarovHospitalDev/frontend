@@ -9,7 +9,10 @@
     </div>
     <div class="content">
       <div class="sidebar">
-        <div class="menu-item">Пациент</div>
+        <div 
+          class="menu-item" 
+          @click="goToPatient"
+        >Пациент</div>
         <div class="menu-item active">Протез</div>
         <div class="menu-item">Лечение</div>
         <div class="menu-item">Коморбидные патологии</div>
@@ -252,6 +255,13 @@ export default {
     logout() {
       this.logoutAction().then(() => {
         this.$router.push('/');
+      });
+    },
+    
+    goToPatient() {
+      this.$router.push({
+        name: 'PatientDetail',
+        params: { id: this.patientId }
       });
     },
   },

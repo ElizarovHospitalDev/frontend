@@ -57,12 +57,20 @@
           <div v-else-if="patient" class="patient-info">
             <div class="patient-header">
               <h2>{{ getFullName(patient) }}</h2>
-              <button class="edit-btn" @click="startEditing" v-if="!isEditing">
-                <svg width="16" height="16" viewBox="0 0 24 24">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
-                </svg>
-                Редактировать
-              </button>
+              <div class="header-actions">
+                <button class="edit-btn" @click="startEditing" v-if="!isEditing">
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                  </svg>
+                  Редактировать
+                </button>
+                <button class="delete-btn" @click="confirmDelete">
+                  <svg width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                  </svg>
+                  Удалить
+                </button>
+              </div>
             </div>
             
             <!-- Режим просмотра -->
@@ -292,6 +300,25 @@ export default {
       this.logoutAction().then(() => {
         this.$router.push('/');
       });
+    },
+    async confirmDelete() {
+      if (confirm('Вы уверены, что хотите удалить этого пациента? Это действие нельзя отменить.')) {
+        try {
+          console.log('Patient object:', this.patient);
+          console.log('Patient ID type:', typeof this.id);
+          console.log('Patient ID value:', this.id);
+          const response = await authService.deletePatient(this.id);
+          console.log('Delete response:', response);
+          this.$router.push('/patients');
+        } catch (error) {
+          console.error('Error deleting patient:', error);
+          if (error.response) {
+            console.error('Error response data:', error.response.data);
+            console.error('Error response status:', error.response.status);
+          }
+          alert('Ошибка при удалении пациента: ' + (error.message || 'Неизвестная ошибка'));
+        }
+      }
     }
   },
   created() {
@@ -468,13 +495,19 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  width: 100%;
 }
 
-.edit-btn {
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.edit-btn, .delete-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #9ac531;
   color: white;
   border: none;
   border-radius: 8px;
@@ -482,10 +515,23 @@ export default {
   font-size: 14px;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.edit-btn {
+  background: #9ac531;
 }
 
 .edit-btn:hover {
   background: #7fa11e;
+}
+
+.delete-btn {
+  background: #ff4444;
+}
+
+.delete-btn:hover {
+  background: #cc0000;
 }
 
 .edit-form {

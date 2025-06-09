@@ -49,7 +49,7 @@
         </div>
         
         <div class="pathologies-actions">
-          <button class="add-btn" @click="startAdding">
+          <button class="add-btn" @click="showAddModal = true">
             <svg width="16" height="16" viewBox="0 0 24 24">
               <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
             </svg>
@@ -61,7 +61,7 @@
         <div v-else-if="error" class="error">{{ error }}</div>
         
         <div v-else class="pathologies-list">
-          <div v-if="filteredPathologies.length === 0" class="no-pathology">
+          <div v-if="!filteredPathologies || filteredPathologies.length === 0" class="no-pathology">
             <h2 v-if="searchQuery">Ничего не найдено</h2>
             <h2 v-else>Данные о коморбидных патологиях отсутствуют</h2>
             <p v-if="searchQuery">Попробуйте изменить параметры поиска</p>
@@ -70,7 +70,7 @@
           
           <div 
             v-for="(pathology, index) in filteredPathologies" 
-            :key="pathology.id" 
+            :key="pathology?.id" 
             class="pathology-item"
           >
             <div class="pathology-header">
@@ -82,7 +82,7 @@
                   </svg>
                   Редактировать
                 </button>
-                <button class="delete-btn" @click="confirmDelete(pathology.id)">
+                <button class="delete-btn" @click="confirmDelete(pathology?.id)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                   </svg>
@@ -91,77 +91,111 @@
               </div>
             </div>
             
+            <template v-if="pathology?.treatment">
+              <div class="info-row">
+                <div class="info-label">Лечение:</div>
+                <div class="info-value">{{ pathology?.treatment ? getTreatmentInfo(pathology.treatment) : 'Не указано' }}</div>
+              </div>
+            </template>
+            
             <div class="info-row">
               <div class="info-label">Ожирение:</div>
-              <div class="info-value">{{ pathology.obesity ? 'Да' : 'Нет' }}</div>
+              <div class="info-value">{{ pathology?.obesity ? 'Да' : 'Нет' }}</div>
             </div>
+            
             <div class="info-row">
               <div class="info-label">Сахарный диабет:</div>
-              <div class="info-value">{{ pathology.diabetes_mellitus ? 'Да' : 'Нет' }}</div>
+              <div class="info-value">{{ pathology?.diabetes_mellitus ? 'Да' : 'Нет' }}</div>
             </div>
+            
             <div class="info-row">
               <div class="info-label">Гепатит:</div>
-              <div class="info-value">{{ pathology.hepatitis ? 'Да' : 'Нет' }}</div>
+              <div class="info-value">{{ pathology?.hepatitis ? 'Да' : 'Нет' }}</div>
             </div>
+            
             <div class="info-row">
               <div class="info-label">ВИЧ:</div>
-              <div class="info-value">{{ pathology.hiv ? 'Да' : 'Нет' }}</div>
+              <div class="info-value">{{ pathology?.hiv ? 'Да' : 'Нет' }}</div>
             </div>
+            
             <div class="info-row">
               <div class="info-label">Гормональное лечение:</div>
-              <div class="info-value">{{ pathology.hormonal_treatment ? 'Да' : 'Нет' }}</div>
+              <div class="info-value">{{ pathology?.hormonal_treatment ? 'Да' : 'Нет' }}</div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Pathology Modal -->
+    <div v-if="showAddModal || showEditModal" class="modal">
+      <div class="modal-content">
+        <h2>{{ showEditModal ? 'Редактировать' : 'Добавить' }} коморбидную патологию</h2>
         
-        <div v-if="isEditing" class="modal-overlay">
-          <div class="modal-content">
-            <h2>{{ editingPathologyId ? 'Редактирование данных' : 'Добавление данных' }}</h2>
-            
-            <form @submit.prevent="saveChanges" class="edit-form">
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="editForm.obesity">
-                  Ожирение
-                </label>
-              </div>
-              
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="editForm.diabetes_mellitus">
-                  Сахарный диабет
-                </label>
-              </div>
-              
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="editForm.hepatitis">
-                  Гепатит
-                </label>
-              </div>
-              
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="editForm.hiv">
-                  ВИЧ
-                </label>
-              </div>
-              
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="editForm.hormonal_treatment">
-                  Гормональное лечение
-                </label>
-              </div>
-              
-              <div class="form-actions">
-                <button type="button" class="cancel-btn" @click="cancelEditing">Отмена</button>
-                <button type="submit" class="save-btn" :disabled="saving">
-                  {{ saving ? 'Сохранение...' : 'Сохранить' }}
-                </button>
-              </div>
-            </form>
-          </div>
+        <div class="form-group">
+          <label>Лечение:</label>
+          <select :value="showEditModal ? editingPathology.treatment : newPathology.treatment" @input="e => showEditModal ? editingPathology.treatment = e.target.value : newPathology.treatment = e.target.value" class="form-control">
+            <option :value="null">Выберите лечение</option>
+            <option 
+              v-for="treatment in treatments" 
+              :key="treatment.id" 
+              :value="treatment.id"
+            >
+              {{ getTreatmentInfo(treatment.id) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" :checked="showEditModal ? editingPathology.obesity : newPathology.obesity" @change="e => showEditModal ? editingPathology.obesity = e.target.checked : newPathology.obesity = e.target.checked">
+            Ожирение
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" :checked="showEditModal ? editingPathology.diabetes_mellitus : newPathology.diabetes_mellitus" @change="e => showEditModal ? editingPathology.diabetes_mellitus = e.target.checked : newPathology.diabetes_mellitus = e.target.checked">
+            Сахарный диабет
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" :checked="showEditModal ? editingPathology.hepatitis : newPathology.hepatitis" @change="e => showEditModal ? editingPathology.hepatitis = e.target.checked : newPathology.hepatitis = e.target.checked">
+            Гепатит
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" :checked="showEditModal ? editingPathology.hiv : newPathology.hiv" @change="e => showEditModal ? editingPathology.hiv = e.target.checked : newPathology.hiv = e.target.checked">
+            ВИЧ
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" :checked="showEditModal ? editingPathology.hormonal_treatment : newPathology.hormonal_treatment" @change="e => showEditModal ? editingPathology.hormonal_treatment = e.target.checked : newPathology.hormonal_treatment = e.target.checked">
+            Гормональное лечение
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="showEditModal ? updatePathology() : createPathology()" class="save-btn">Сохранить</button>
+          <button @click="closeModal" class="cancel-btn">Отмена</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal">
+      <div class="modal-content">
+        <h2>Подтверждение удаления</h2>
+        <p>Вы уверены, что хотите удалить эти данные о патологиях?</p>
+        <div class="modal-actions">
+          <button @click="deletePathology" class="delete-btn">Удалить</button>
+          <button @click="showDeleteModal = false" class="cancel-btn">Отмена</button>
         </div>
       </div>
     </div>
@@ -184,13 +218,17 @@ export default {
   data() {
     return {
       pathologies: [],
+      treatments: [],
+      arthroplastyForms: [],
       loading: true,
       error: null,
-      isEditing: false,
-      editingPathologyId: null,
-      saving: false,
       searchQuery: '',
-      editForm: {
+      editingPathology: null,
+      showDeleteModal: false,
+      pathologyToDelete: null,
+      showEditModal: false,
+      showAddModal: false,
+      newPathology: {
         obesity: false,
         diabetes_mellitus: false,
         hepatitis: false,
@@ -202,10 +240,12 @@ export default {
   },
   computed: {
     filteredPathologies() {
-      if (!this.searchQuery) return this.pathologies;
+      if (!this.pathologies) return [];
+      if (!this.searchQuery) return this.pathologies.filter(p => p);
       
       const query = this.searchQuery.toLowerCase();
       return this.pathologies.filter(pathology => {
+        if (!pathology) return false;
         return (
           (pathology.obesity && 'ожирение'.includes(query)) ||
           (pathology.diabetes_mellitus && 'сахарный диабет'.includes(query)) ||
@@ -219,174 +259,214 @@ export default {
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
     
-    async fetchTreatmentId() {
+    async loadInitialData() {
       try {
-        const treatments = await authService.getTreatments();
-        const patientTreatment = treatments.find(t => String(t.patient) === String(this.patientId));
-        if (patientTreatment) {
-          this.editForm.treatment = patientTreatment.id;
-          return patientTreatment.id;
-        }
-        return null;
+        this.loading = true;
+        await Promise.all([
+          this.fetchPathologies(),
+          this.fetchTreatments(),
+          this.fetchArthroplastyForms()
+        ]);
       } catch (error) {
-        console.error('Ошибка загрузки данных о лечении:', error);
-        return null;
-      }
-    },
-    
-    async fetchPathologies() {
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        const treatmentId = await this.fetchTreatmentId();
-        if (!treatmentId) {
-          this.pathologies = [];
-          return;
-        }
-        
-        const response = await authService.getComorbidPathologies();
-        this.pathologies = response.filter(p => p.treatment === treatmentId);
-      } catch (error) {
-        console.error('Ошибка загрузки данных о патологиях:', error);
-        this.error = error.response?.data?.message || error.message || 'Ошибка загрузки данных';
-        
-        if (error.response?.status === 401) {
-          this.logout();
-        }
+        this.error = 'Ошибка при загрузке данных';
+        console.error('Error loading initial data:', error);
       } finally {
         this.loading = false;
       }
     },
-    
-    startAdding() {
-      this.editForm = {
-        treatment: this.editForm.treatment,
+
+    async fetchPathologies() {
+      try {
+        const response = await authService.getComorbidPathologies();
+        this.pathologies = response;
+      } catch (error) {
+        console.error('Error fetching pathologies:', error);
+        this.error = 'Ошибка при загрузке данных о патологиях';
+      }
+    },
+
+    async fetchTreatments() {
+      try {
+        const response = await authService.getTreatments({ patient: this.patientId });
+        this.treatments = response;
+      } catch (error) {
+        console.error('Error fetching treatments:', error);
+        this.error = 'Ошибка при загрузке данных о лечении';
+      }
+    },
+
+    async fetchArthroplastyForms() {
+      try {
+        const response = await authService.getArthroplastyForms();
+        this.arthroplastyForms = response;
+      } catch (error) {
+        console.error('Error fetching arthroplasty forms:', error);
+        this.error = 'Ошибка при загрузке форм артропластики';
+      }
+    },
+
+    getTreatmentInfo(treatmentId) {
+      if (!treatmentId) return 'Не указано';
+      const treatment = this.treatments.find(t => t.id === treatmentId);
+      if (!treatment) return 'Неизвестное лечение';
+      
+      const reasonName = this.getReasonName(treatment.reason);
+      const formName = this.getArthroplastyFormName(treatment.form);
+      
+      return `${reasonName} - ${formName}`;
+    },
+
+    getReasonName(reason) {
+      const reasons = {
+        'травма': 'Травма',
+        'гонартроз': 'Гонартроз',
+        'дисплазия': 'Дисплазия',
+        'онкология': 'Онкология'
+      };
+      return reasons[reason] || 'Неизвестная причина';
+    },
+
+    getArthroplastyFormName(formId) {
+      const form = this.arthroplastyForms.find(f => f.id === formId);
+      return form ? form.name : 'Неизвестная форма';
+    },
+
+    startEditing(pathology) {
+      this.editingPathology = { ...pathology };
+      this.showEditModal = true;
+    },
+
+    async updatePathology() {
+      try {
+        const pathologyData = {
+          obesity: this.editingPathology.obesity,
+          diabetes_mellitus: this.editingPathology.diabetes_mellitus,
+          hepatitis: this.editingPathology.hepatitis,
+          hiv: this.editingPathology.hiv,
+          hormonal_treatment: this.editingPathology.hormonal_treatment,
+          treatment: this.editingPathology.treatment || 0
+        };
+        
+        const response = await authService.updateComorbidPathology(this.editingPathology.id, pathologyData);
+        const index = this.pathologies.findIndex(p => p.id === this.editingPathology.id);
+        if (index !== -1) {
+          this.pathologies[index] = response.data;
+        }
+        this.showEditModal = false;
+        this.editingPathology = null;
+      } catch (error) {
+        console.error('Error updating pathology:', error);
+        this.error = 'Ошибка при обновлении данных о патологиях';
+      }
+    },
+
+    async createPathology() {
+      try {
+        const pathologyData = {
+          obesity: this.newPathology.obesity,
+          diabetes_mellitus: this.newPathology.diabetes_mellitus,
+          hepatitis: this.newPathology.hepatitis,
+          hiv: this.newPathology.hiv,
+          hormonal_treatment: this.newPathology.hormonal_treatment,
+          treatment: this.newPathology.treatment || 0,
+          patient: this.patientId
+        };
+        
+        const response = await authService.createComorbidPathology(pathologyData);
+        this.pathologies.push(response);
+        this.showAddModal = false;
+        this.newPathology = {
+          obesity: false,
+          diabetes_mellitus: false,
+          hepatitis: false,
+          hiv: false,
+          hormonal_treatment: false,
+          treatment: null
+        };
+      } catch (error) {
+        console.error('Error creating pathology:', error);
+        this.error = 'Ошибка при создании данных о патологиях';
+      }
+    },
+
+    confirmDelete(id) {
+      this.pathologyToDelete = id;
+      this.showDeleteModal = true;
+    },
+
+    closeModal() {
+      this.showAddModal = false;
+      this.showEditModal = false;
+      this.editingPathology = null;
+      this.newPathology = {
         obesity: false,
         diabetes_mellitus: false,
         hepatitis: false,
         hiv: false,
-        hormonal_treatment: false
+        hormonal_treatment: false,
+        treatment: null
       };
-      this.editingPathologyId = null;
-      this.isEditing = true;
     },
-    
-    startEditing(pathology) {
-      this.editForm = {
-        treatment: pathology.treatment,
-        obesity: pathology.obesity,
-        diabetes_mellitus: pathology.diabetes_mellitus,
-        hepatitis: pathology.hepatitis,
-        hiv: pathology.hiv,
-        hormonal_treatment: pathology.hormonal_treatment
-      };
-      this.editingPathologyId = pathology.id;
-      this.isEditing = true;
-    },
-    
-    async saveChanges() {
-      this.saving = true;
-      this.error = null;
 
-      try {
-        const pathologyData = {
-          treatment: this.editForm.treatment,
-          obesity: this.editForm.obesity,
-          diabetes_mellitus: this.editForm.diabetes_mellitus,
-          hepatitis: this.editForm.hepatitis,
-          hiv: this.editForm.hiv,
-          hormonal_treatment: this.editForm.hormonal_treatment
-        };
-
-        if (this.editingPathologyId) {
-          const updated = await authService.updateComorbidPathology(this.editingPathologyId, pathologyData);
-          const index = this.pathologies.findIndex(p => p.id === this.editingPathologyId);
-          this.pathologies.splice(index, 1, updated);
-          this.showSuccessMessage('Данные о патологиях успешно обновлены');
-        } else {
-          const created = await authService.createComorbidPathology(pathologyData);
-          this.pathologies.push(created);
-          this.showSuccessMessage('Данные о патологиях успешно сохранены');
-        }
-
-        this.isEditing = false;
-      } catch (error) {
-        console.error('Ошибка сохранения:', error);
-        this.error = error.response?.data?.message || error.message || 'Ошибка при сохранении данных';
-      } finally {
-        this.saving = false;
-      }
-    },
-    
-    showSuccessMessage(message) {
-      alert(message);
-    },
-    
-    cancelEditing() {
-      this.isEditing = false;
-    },
-    
-    async confirmDelete(id) {
-      if (confirm('Вы уверены, что хотите удалить эти данные о патологиях?')) {
-        try {
-          await authService.deleteComorbidPathology(id);
-          this.pathologies = this.pathologies.filter(p => p.id !== id);
-          this.showSuccessMessage('Данные о патологиях успешно удалены');
-        } catch (error) {
-          console.error('Ошибка удаления:', error);
-          this.error = error.response?.data?.message || error.message || 'Ошибка при удалении';
-        }
-      }
-    },
-    
     handleSearch: debounce(function() {
+      // Поиск уже реализован через computed свойство filteredPathologies
     }, 300),
-    
+
     clearSearch() {
       this.searchQuery = '';
     },
-    
+
     goToPatient() {
-      this.$router.push({ name: 'PatientDetail', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}`);
     },
-    
+
     goToProsthesis() {
-      this.$router.push({ name: 'ProsthesisInfo', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}/prosthesis`);
     },
-    
+
     goToTreatment() {
-      this.$router.push({ name: 'PatientTreatment', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}/treatment`);
     },
-    
+
     goToMicroflora() {
-      this.$router.push({ name: 'PatientMicroflora', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}/microflora`);
     },
-    
+
     goToOperations() {
-      this.$router.push({ name: 'PatientOperations', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}/operations`);
     },
-    
+
     goToAnalysis() {
-      this.$router.push({ name: 'PatientAnalysis', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}/analysis`);
     },
-    
+
     goToOutcomes() {
-      this.$router.push({ name: 'PatientOutcomes', params: { id: this.patientId } });
+      this.$router.push(`/patient/${this.patientId}/outcomes`);
     },
-    
+
     goBack() {
-      this.$router.push('/patients');
+      this.$router.go(-1);
     },
-    
+
     logout() {
-      this.logoutAction().then(() => {
-        this.$router.push('/');
-      });
+      this.$store.dispatch('auth/logout');
+      this.$router.push('/login');
+    },
+
+    async deletePathology() {
+      try {
+        await authService.deleteComorbidPathology(this.pathologyToDelete);
+        this.pathologies = this.pathologies.filter(p => p.id !== this.pathologyToDelete);
+        this.showDeleteModal = false;
+        this.pathologyToDelete = null;
+      } catch (error) {
+        console.error('Error deleting pathology:', error);
+        this.error = 'Ошибка при удалении данных о патологиях';
+      }
     }
   },
   async created() {
-    await this.fetchTreatmentId();
+    await this.loadInitialData();
     await this.fetchPathologies();
   },
   watch: {
@@ -671,7 +751,7 @@ export default {
   color: #333;
 }
 
-.modal-overlay {
+.modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -700,45 +780,22 @@ export default {
   color: #333;
 }
 
-.edit-form {
-  margin-top: 20px;
-}
-
 .form-group {
   margin-bottom: 16px;
 }
 
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  padding: 8px;
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e6eec6;
   border-radius: 4px;
-  transition: background 0.2s;
 }
 
-.checkbox-label:hover {
-  background: #f5f5f5;
-}
-
-.checkbox-label input {
-  width: auto;
-}
-
-.form-actions {
+.modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
-}
-
-.cancel-btn {
-  padding: 10px 16px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  cursor: pointer;
 }
 
 .save-btn {
@@ -754,8 +811,11 @@ export default {
   background: #7fa11e;
 }
 
-.save-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
+.cancel-btn {
+  padding: 10px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
 }
 </style>

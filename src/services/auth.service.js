@@ -419,45 +419,31 @@ class AuthService {
   }
 
   async createTreatment(data) {
-    try {
-      const requestData = {
-        patient: Number(data.patient),
-        reason: data.reason || null,
-        form: Number(data.form),
-        therapy: data.therapy || null,
-        form_pjl: data.form_pjl || null,
-        local_status: data.local_status || null,
-        thigh_defect: data.thigh_defect || null,
-        shin_defect: data.shin_defect || null,
-        therapy_option: data.therapy_option || null
-      };
-      
-      const response = await axiosInstance.post('/treatments/', requestData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return axiosInstance.post('/treatments/', {
+      reason: data.reason,
+      form: data.form,
+      therapy: data.therapy || '',
+      form_pjl: data.form_pjl || '',
+      local_status: data.local_status || '',
+      thigh_defect: data.thigh_defect || '',
+      shin_defect: data.shin_defect || '',
+      therapy_option: data.therapy_option || '',
+      patient: data.patient
+    });
   }
 
   async updateTreatment(id, data) {
-    try {
-      const requestData = {
-        patient: Number(data.patient),
-        reason: data.reason || null,
-        form: Number(data.form),
-        therapy: data.therapy || null,
-        form_pjl: data.form_pjl || null,
-        local_status: data.local_status || null,
-        thigh_defect: data.thigh_defect || null,
-        shin_defect: data.shin_defect || null,
-        therapy_option: data.therapy_option || null
-      };
-      
-      const response = await axiosInstance.put(`/treatments/${id}/`, requestData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return axiosInstance.put(`/treatments/${id}/`, {
+      reason: data.reason,
+      form: data.form,
+      therapy: data.therapy || '',
+      form_pjl: data.form_pjl || '',
+      local_status: data.local_status || '',
+      thigh_defect: data.thigh_defect || '',
+      shin_defect: data.shin_defect || '',
+      therapy_option: data.therapy_option || '',
+      patient: data.patient
+    });
   }
 
   async deleteTreatment(id) {
@@ -467,14 +453,15 @@ class AuthService {
       throw this.handleError(error);
     }
   }
+
   async createArthroplastyForm(data) {
-  try {
-    const response = await axiosInstance.post('/arthroplasty_form/', data);
-    return response.data;
-  } catch (error) {
-    throw this.handleError(error);
+    try {
+      const response = await axiosInstance.post('/arthroplasty_form/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
   }
-}
 
   // Surgical Intervention methods
   async getSurgicalInterventions() {
@@ -677,6 +664,7 @@ class AuthService {
       throw this.handleError(error);
     }
   }
+
   async deleteTreatmentOutcome(id) {
     try {
       await axiosInstance.delete(`/treatments/outcome/${id}/`);
@@ -744,6 +732,41 @@ class AuthService {
     try {
       const response = await axiosInstance.get('/treatments/treatment_options/');
       return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getArthroplastyTypes() {
+    try {
+      const response = await axiosInstance.get('/treatments/arthroplasty_form/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createArthroplastyType(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/arthroplasty_form/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateArthroplastyType(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/arthroplasty_form/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteArthroplastyType(id) {
+    try {
+      await axiosInstance.delete(`/treatments/arthroplasty_form/${id}/`);
     } catch (error) {
       throw this.handleError(error);
     }

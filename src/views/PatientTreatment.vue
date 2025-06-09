@@ -94,11 +94,11 @@
             <div class="info-section">
               <div class="info-row">
                 <div class="info-label">Причина артропластики:</div>
-                <div class="info-value">{{ getReasonName(treatment.reason) || 'Не указана' }}</div>
+                <div class="info-value">{{ getReasonName(treatment.reason) }}</div>
               </div>
               <div class="info-row">
                 <div class="info-label">Вид артропластики:</div>
-                <div class="info-value">{{ getFormName(treatment.form) || 'Не указан' }}</div>
+                <div class="info-value">{{ getArthroplastyFormName(treatment.form) || 'Не указан' }}</div>
               </div>
               <div class="info-row">
                 <div class="info-label">Вид ППИ:</div>
@@ -138,10 +138,10 @@
                   :class="{ 'error-field': errors.reason }"
                 >
                   <option value="" disabled>Выберите причину</option>
-                  <option value="1">Травма</option>
-                  <option value="2">Гонартроз</option>
-                  <option value="3">Дисплазия</option>
-                  <option value="4">Онкология</option>
+                  <option value="травма">Травма</option>
+                  <option value="гонартроз">Гонартроз</option>
+                  <option value="дисплазия">Дисплазия</option>
+                  <option value="онкология">Онкология</option>
                 </select>
                 <span v-if="errors.reason" class="error-message">{{ errors.reason }}</span>
               </div>
@@ -155,8 +155,11 @@
                   :class="{ 'error-field': errors.form }"
                 >
                   <option value="" disabled>Выберите вид</option>
-                  <option value="1">Первичная</option>
-                  <option value="2">Ревизионная</option>
+                  <option v-for="form in arthroplastyForms" 
+                          :key="form.id" 
+                          :value="form.id">
+                    {{ form.name }}
+                  </option>
                 </select>
                 <span v-if="errors.form" class="error-message">{{ errors.form }}</span>
               </div>
@@ -267,6 +270,11 @@ export default {
       saving: false,
       searchQuery: '',
       errors: {},
+      prostheses: [],
+      prosthesisTypes: [],
+      prosthesisVendors: [],
+      prosthesisForms: [],
+      arthroplastyForms: [],
       
       editForm: {
         reason: null,
@@ -281,34 +289,40 @@ export default {
     };
   },
   computed: {
-  filteredTreatments() {
-    if (!this.searchQuery) return this.treatments;
+    filteredTreatments() {
+      if (!this.searchQuery) return this.treatments;
 
-    const query = this.searchQuery.toLowerCase();
-    return this.treatments.filter(treatment => {
-      return (
-        this.getReasonName(treatment.reason)?.toLowerCase().includes(query) ||
-        this.getFormName(treatment.form)?.toLowerCase().includes(query) ||
-        this.getPjlTypeName(treatment.form_pjl)?.toLowerCase().includes(query) ||
-        this.getLocalStatusName(treatment.local_status)?.toLowerCase().includes(query) ||
-        this.getAoriDefectName(treatment.thigh_defect)?.toLowerCase().includes(query) ||
-        this.getAoriDefectName(treatment.shin_defect)?.toLowerCase().includes(query) ||
-        this.getTreatmentOptionName(treatment.therapy_option)?.toLowerCase().includes(query)
-      );
-    });
-  }
-},
+      const query = this.searchQuery.toLowerCase();
+      return this.treatments.filter(treatment => {
+        return (
+          this.getReasonName(treatment.reason)?.toLowerCase().includes(query) ||
+          this.getArthroplastyFormName(treatment.form)?.toLowerCase().includes(query) ||
+          this.getPjlTypeName(treatment.form_pjl)?.toLowerCase().includes(query) ||
+          this.getLocalStatusName(treatment.local_status)?.toLowerCase().includes(query) ||
+          this.getAoriDefectName(treatment.thigh_defect)?.toLowerCase().includes(query) ||
+          this.getAoriDefectName(treatment.shin_defect)?.toLowerCase().includes(query) ||
+          this.getTreatmentOptionName(treatment.therapy_option)?.toLowerCase().includes(query)
+        );
+      });
+    }
+  },
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
     
-    getReasonName(reasonId) {
+    getArthroplastyFormName(id) {
+      if (!id) return 'Не указан';
+      const form = this.arthroplastyForms.find(f => f.id === Number(id));
+      return form ? form.name : 'Неизвестная форма';
+    },
+    
+    getReasonName(reason) {
       const reasons = {
-        1: "Травма",
-        2: "Гонартроз",
-        3: "Дисплазия",
-        4: "Онкология"
+        'травма': 'Травма',
+        'гонартроз': 'Гонартроз',
+        'дисплазия': 'Дисплазия',
+        'онкология': 'Онкология'
       };
-      return reasons[reasonId] || null;
+      return reasons[reason] || 'Не указано';
     },
     
     getFormName(formId) {
@@ -357,10 +371,23 @@ export default {
     async loadInitialData() {
       this.loading = true;
       try {
+        const [prostheses, types, vendors, forms, arthroplastyForms] = await Promise.all([
+          authService.getProstheses(),
+          authService.getProsthesisTypes(),
+          authService.getProsthesisVendors(),
+          authService.getProsthesisForms(),
+          authService.getArthroplastyTypes()
+        ]);
+        
+        this.prostheses = prostheses;
+        this.prosthesisTypes = types;
+        this.prosthesisVendors = vendors;
+        this.prosthesisForms = forms;
+        this.arthroplastyForms = arthroplastyForms;
+
         await this.fetchTreatments();
       } catch (error) {
-        this.error = 'Ошибка загрузки данных';
-        console.error(error);
+        this.handleApiError(error);
       } finally {
         this.loading = false;
       }
@@ -400,11 +427,12 @@ export default {
         const treatmentData = {
           reason: this.editForm.reason,
           form: this.editForm.form,
-          form_pjl: this.editForm.form_pjl,
-          local_status: this.editForm.local_status,
-          thigh_defect: this.editForm.thigh_defect,
-          shin_defect: this.editForm.shin_defect,
-          therapy_option: this.editForm.therapy_option,
+          therapy: this.editForm.therapy || '',
+          form_pjl: this.editForm.form_pjl || '',
+          local_status: this.editForm.local_status || '',
+          thigh_defect: this.editForm.thigh_defect || '',
+          shin_defect: this.editForm.shin_defect || '',
+          therapy_option: this.editForm.therapy_option || '',
           patient: this.patientId
         };
 
@@ -449,7 +477,7 @@ export default {
     
     startEditing(treatment) {
       this.editForm = {
-        reason: treatment.reason,
+        reason: treatment.reason || '',
         form: treatment.form,
         form_pjl: treatment.form_pjl,
         local_status: treatment.local_status,

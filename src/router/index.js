@@ -11,6 +11,7 @@ import PatientOperations from '@/views/PatientOperations.vue';
 import PatientAnalysis from '@/views/PatientAnalysis.vue';
 import PatientOutcomes from '@/views/PatientOutcomes.vue';
 import PatientTreatment from '@/views/PatientTreatment.vue';
+import ArthroplastyTypes from '@/views/ArthroplastyTypes.vue';
 
 const routes = [
   {
@@ -90,6 +91,12 @@ const routes = [
     component: PatientTreatment,
     meta: { requiresAuth: true },
     props: route => ({ patientId: route.params.id })
+ },
+ {
+    path: '/arthroplasty-types',
+    name: 'ArthroplastyTypes',
+    component: ArthroplastyTypes,
+    meta: { requiresAuth: true }
  }
 ];
 

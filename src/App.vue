@@ -1,12 +1,23 @@
 <template>
-  <router-view></router-view>
+  <div id="app">
+    <Navbar v-if="isAuthenticated" />
+    <router-view></router-view>
+  </div>
 </template>
 
 <script>
 import authService from '@/services/auth.service';
+import Navbar from '@/components/Navbar.vue';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'App',
+  components: {
+    Navbar
+  },
+  computed: {
+    ...mapGetters('auth', ['isAuthenticated'])
+  },
   async mounted() {
     // Check token on app initialization
     await authService.checkAndRefreshToken();

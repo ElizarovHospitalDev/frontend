@@ -4,53 +4,43 @@ import store from '@/store';
 
 const API_URL = process.env.VUE_APP_API_URL || 'http://109.120.157.120:8000/v1';
 
-console.log('API URL:', API_URL);
-
-// Create axios instance with timeout
 const axiosInstance = axios.create({
   baseURL: API_URL,
-  timeout: 30000, // 30 seconds timeout
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 });
 
-// Add request interceptor to add auth token
+// Request interceptor
 axiosInstance.interceptors.request.use(
   config => {
-    const accessToken = store.getters['auth/accessToken'];
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    const token = store.getters['auth/accessToken'];
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  error => {
-    return Promise.reject(error);
-  }
+  error => Promise.reject(error)
 );
 
-// Add response interceptor to handle token refresh
+// Response interceptor
 axiosInstance.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
     
-    // If error is 401 and we haven't tried to refresh token yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
-        // Try to refresh token
         await store.dispatch('auth/refreshToken');
-        
-        // Retry the original request with new token
-        const accessToken = store.getters['auth/accessToken'];
-        originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
+        const newToken = store.getters['auth/accessToken'];
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, logout user
-        store.dispatch('auth/logout');
+        await store.dispatch('auth/logout');
         return Promise.reject(refreshError);
       }
     }
@@ -60,82 +50,27 @@ axiosInstance.interceptors.response.use(
 );
 
 class AuthService {
-  async checkAndRefreshToken() {
-    const accessToken = store.getters['auth/accessToken'];
-    console.log('Checking token:', { hasAccessToken: !!accessToken });
-    
-    if (accessToken && isTokenExpired(accessToken)) {
-      console.log('Token is expired, attempting refresh');
-      try {
-        await store.dispatch('auth/refreshToken');
-        console.log('Token refresh successful');
-        return true;
-      } catch (error) {
-        console.error('Token refresh failed:', error);
-        store.dispatch('auth/logout');
-        return false;
-      }
-    }
-    return true;
+  constructor() {
+    this.cache = {
+      prosthesisTypes: null,
+      prosthesisVendors: null,
+      prosthesisForms: null,
+      patients: null
+    };
   }
 
+  // Auth methods
   async login(credentials) {
-    console.log('AuthService.login called:', { credentials });
     try {
-      // Use exact format from API documentation
-      const loginData = {
+      const response = await axiosInstance.post('/users/tokens/', {
         username: credentials.username,
         password: credentials.password
-      };
-      console.log('Sending login request with data:', loginData);
-      
-      const response = await axiosInstance.post('/users/tokens/', loginData);
-      console.log('Login response:', response.data);
+      });
       return {
         access: response.data.access,
         refresh: response.data.refresh,
         user: response.data.user
       };
-    } catch (error) {
-      console.error('Login error in service:', {
-        error,
-        response: error.response?.data,
-        status: error.response?.status,
-        headers: error.response?.headers,
-        request: {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers,
-          data: error.config?.data
-        }
-      });
-      throw this.handleError(error);
-    }
-  }
-
-  async getCsrfToken() {
-    try {
-      const response = await axiosInstance.get('/users/csrf/');
-      return response.data.csrfToken;
-    } catch (error) {
-      console.error('Failed to get CSRF token:', error);
-      throw error;
-    }
-  }
-
-  async requestPasswordReset(email) {
-    try {
-      const response = await axiosInstance.post('/auth/forgot-password', { email });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async confirmPasswordReset(data) {
-    try {
-      const response = await axiosInstance.post('/users/password/reset/confirm/', data);
-      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -146,29 +81,64 @@ class AuthService {
       const response = await axiosInstance.post('/users/token/refresh/', {
         refresh: refreshToken
       });
-      return {
-        access: response.data.access,
-        refresh: response.data.refresh,
-        user: response.data.user
-      };
+      return response.data.access;
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
+  async logout() {
+    try {
+      await axiosInstance.post('/auth/logout/');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }
+
+  async checkAndRefreshToken() {
+    const token = store.getters['auth/accessToken'];
+    if (!token) return false;
+    
+    if (isTokenExpired(token)) {
+      try {
+        await store.dispatch('auth/refreshToken');
+        return true;
+      } catch (error) {
+        await store.dispatch('auth/logout');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Patient methods
   async getPatients() {
+    if (this.cache.patients) {
+      return this.cache.patients;
+    }
+
     try {
       const response = await axiosInstance.get('/treatments/patients/');
+      this.cache.patients = response.data;
+      return this.cache.patients;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getPatient(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/patients/${id}/`);
       return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-
   async createPatient(patientData) {
     try {
       const response = await axiosInstance.post('/treatments/patients/', patientData);
+      this.cache.patients = null; // Invalidate cache
       return response.data;
     } catch (error) {
       throw this.handleError(error);
@@ -177,77 +147,674 @@ class AuthService {
 
   async updatePatient(id, patientData) {
     try {
-      console.log(`Making PUT request to /treatments/patients/${id}/`);
-      console.log('Request data:', patientData);
-      
-      // Make sure we're sending the exact format the API expects
-      const cleanedData = {
-        first_name: patientData.first_name,
-        last_name: patientData.last_name,
-        middle_name: patientData.middle_name,
-        birthday: patientData.birthday,
-        mobile_phone: patientData.mobile_phone,
-        // Convert 'F' to 'W' for female gender
-        sex: patientData.sex === 'F' ? 'W' : patientData.sex,
-        address: patientData.address
-      };
-      
-      console.log('Cleaned data being sent:', cleanedData);
-      
-      const response = await axiosInstance.put(`/treatments/patients/${id}/`, cleanedData);
-      console.log('Response:', response.data);
+      const response = await axiosInstance.put(`/treatments/patients/${id}/`, patientData);
+      this.cache.patients = null; // Invalidate cache
       return response.data;
     } catch (error) {
-      console.error('Error in updatePatient:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  // Prosthesis methods
+  async getProstheses() {
+    try {
+      const response = await axiosInstance.get('/endoprosthetics/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getProsthesis(id) {
+    try {
+      const response = await axiosInstance.get(`/endoprosthetics/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async saveProsthesis(data, id = null) {
+    try {
+      if (!(await this.checkAndRefreshToken())) {
+        throw new Error('Authentication failed');
+      }
+
+      const requestData = {
+        type: await this.resolveTypeId(data.type),
+        vendor: data.vendor ? await this.resolveVendorId(data.vendor) : null,
+        batch: data.batch || null,
+        date: this.formatDateForAPI(data.date),
+        form: data.form ? await this.resolveFormId(data.form) : null,
+        stable: Boolean(data.stable),
+        patient: Number(data.patient)
+      };
+
+      if (id) {
+        return await this.updateProsthesis(id, requestData);
+      } else {
+        return await this.createProsthesis(requestData);
+      }
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createProsthesis(data) {
+    try {
+      const response = await axiosInstance.post('/endoprosthetics/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateProsthesis(id, data) {
+    try {
+      const response = await axiosInstance.put(`/endoprosthetics/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteProsthesis(id) {
+    try {
+      await axiosInstance.delete(`/endoprosthetics/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Reference data methods
+  async getProsthesisTypes() {
+    if (this.cache.prosthesisTypes) {
+      return this.cache.prosthesisTypes;
+    }
+
+    try {
+      const response = await axiosInstance.get('/endoprosthetics/types/');
+      this.cache.prosthesisTypes = response.data;
+      return this.cache.prosthesisTypes;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getProsthesisVendors() {
+    if (this.cache.prosthesisVendors) {
+      return this.cache.prosthesisVendors;
+    }
+
+    try {
+      const response = await axiosInstance.get('/endoprosthetics/vendors/');
+      this.cache.prosthesisVendors = response.data;
+      return this.cache.prosthesisVendors;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getProsthesisForms() {
+    if (this.cache.prosthesisForms) {
+      return this.cache.prosthesisForms;
+    }
+
+    try {
+      const response = await axiosInstance.get('/endoprosthetics/forms/');
+      this.cache.prosthesisForms = response.data;
+      return this.cache.prosthesisForms;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async resolveTypeId(type) {
+    if (!type) return null;
+    if (typeof type === 'number') return type;
+    
+    const types = await this.getProsthesisTypes();
+    const found = types.find(t => t.id === type || t.name === type);
+    return found?.id || null;
+  }
+
+  async resolveVendorId(vendor) {
+    if (!vendor) return null;
+    if (typeof vendor === 'number') return vendor;
+    
+    const vendors = await this.getProsthesisVendors();
+    const found = vendors.find(v => v.id === vendor || v.name === vendor);
+    return found?.id || null;
+  }
+
+  async resolveFormId(form) {
+    if (!form) return null;
+    if (typeof form === 'number') return form;
+    
+    const forms = await this.getProsthesisForms();
+    const found = forms.find(f => f.id === form || f.name === form);
+    return found?.id || null;
+  }
+
+  // Comorbid pathologies methods
+  async getComorbidPathologies() {
+    try {
+      const response = await axiosInstance.get('/treatments/comobrid-pathologies/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getComorbidPathology(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/comobrid-pathologies/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createComorbidPathology(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/comobrid-pathologies/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateComorbidPathology(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/comobrid-pathologies/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteComorbidPathology(id) {
+    try {
+      await axiosInstance.delete(`/treatments/comobrid-pathologies/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  formatDateForAPI(date) {
+    if (!date) return null;
+    if (typeof date === 'string') {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+      const d = new Date(date);
+      return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+    }
+    if (date instanceof Date) {
+      return date.toISOString().split('T')[0];
+    }
+    return null;
+  }
+
+  // Microflora methods
+  async getMicrofloras() {
+    try {
+      const response = await axiosInstance.get('/treatments/microfloras/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getMicroflora(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/microfloras/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createMicroflora(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/microfloras/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateMicroflora(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/microfloras/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteMicroflora(id) {
+    try {
+      await axiosInstance.delete(`/treatments/microfloras/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Treatment methods
+  async getTreatments(params = {}) {
+    try {
+      const response = await axiosInstance.get('/treatments/', { params });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getTreatment(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createTreatment(data) {
+    return axiosInstance.post('/treatments/', {
+      reason: data.reason,
+      form: data.form,
+      therapy: data.therapy || '',
+      form_pjl: data.form_pjl || '',
+      local_status: data.local_status || '',
+      thigh_defect: data.thigh_defect || '',
+      shin_defect: data.shin_defect || '',
+      therapy_option: data.therapy_option || '',
+      patient: data.patient
+    });
+  }
+
+  async updateTreatment(id, data) {
+    return axiosInstance.put(`/treatments/${id}/`, {
+      reason: data.reason,
+      form: data.form,
+      therapy: data.therapy || '',
+      form_pjl: data.form_pjl || '',
+      local_status: data.local_status || '',
+      thigh_defect: data.thigh_defect || '',
+      shin_defect: data.shin_defect || '',
+      therapy_option: data.therapy_option || '',
+      patient: data.patient
+    });
+  }
+
+  async deleteTreatment(id) {
+    try {
+      await axiosInstance.delete(`/treatments/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createArthroplastyForm(data) {
+    try {
+      const response = await axiosInstance.post('/arthroplasty_form/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Surgical Intervention methods
+  async getSurgicalInterventions() {
+    try {
+      const response = await axiosInstance.get('/treatments/surgical-interventions/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getSurgicalIntervention(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/surgical-interventions/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createSurgicalIntervention(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/surgical-interventions/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateSurgicalIntervention(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/surgical-interventions/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteSurgicalIntervention(id) {
+    try {
+      await axiosInstance.delete(`/treatments/surgical-interventions/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getOperationStages() {
+    try {
+      const response = await axiosInstance.get('/treatments/operations-stages/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Analysis methods
+  async getAnalysisDatas() {
+    try {
+      const response = await axiosInstance.get('/treatments/analysis-datas/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getAnalysisData(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/analysis-datas/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createAnalysisData(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/analysis-datas/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateAnalysisData(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/analysis-datas/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteAnalysisData(id) {
+    try {
+      await axiosInstance.delete(`/treatments/analysis-datas/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  // Treatment Outcomes methods
+  async getTreatmentOutcomes() {
+    try {
+      const response = await axiosInstance.get('/treatments/outcome/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getTreatmentOutcome(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/outcome/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createTreatmentOutcome(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/outcome/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateTreatmentOutcome(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/outcome/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteEndoprosthetic(id) {
+    try {
+      const response = await axiosInstance.delete(`/endoprosthetics/${id}/`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting endoprosthetic:', error);
+      throw this.handleError(error);
+    }
+  }
+
+  async deletePatient(id) {
+    const url = `/treatments/patients/${id}/`;
+    try {
+      console.log('Starting patient deletion process for ID:', id);
+      
+      // First, get all endoprosthetics for this patient
+      const endoprosthetics = await this.getProstheses();
+      console.log('Retrieved endoprosthetics:', endoprosthetics);
+      
+      if (!Array.isArray(endoprosthetics)) {
+        throw new Error('Failed to retrieve endoprosthetics: Invalid response format');
+      }
+      
+      const patientEndoprosthetics = endoprosthetics.filter(ep => {
+        const patientId = typeof ep.patient === 'object' ? ep.patient.id : ep.patient;
+        console.log('Checking endoprosthetic:', {
+          id: ep.id,
+          patientId,
+          targetId: id,
+          matches: patientId === id
+        });
+        return patientId === id;
+      });
+      
+      console.log('Found endoprosthetics for patient:', patientEndoprosthetics);
+      
+      // Delete all related endoprosthetics first
+      for (const ep of patientEndoprosthetics) {
+        console.log(`Attempting to delete endoprosthetic ${ep.id}`);
+        try {
+          await this.deleteEndoprosthetic(ep.id);
+          console.log(`Successfully deleted endoprosthetic ${ep.id}`);
+        } catch (deleteError) {
+          console.error(`Failed to delete endoprosthetic ${ep.id}:`, deleteError);
+          throw new Error(`Failed to delete endoprosthetic ${ep.id}: ${deleteError.message}`);
+        }
+      }
+      
+      // Now delete the patient
+      console.log('All endoprosthetics deleted, proceeding to delete patient');
+      const response = await axiosInstance.delete(url);
+      console.log('Patient deletion successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error in deletePatient:', error);
       if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        console.error('Response headers:', error.response.headers);
+        console.error('Server response:', {
+          data: error.response.data,
+          status: error.response.status,
+          headers: error.response.headers
+        });
       }
       throw this.handleError(error);
     }
   }
 
-  handleError(error) {
-    console.log('Handling error:', {
-      code: error.code,
-      message: error.message,
-      response: error.response,
-      request: error.request,
-      data: error.response?.data
-    });
-
-    if (error.code === 'ECONNABORTED') {
-      return {
-        message: 'Превышено время ожидания ответа от сервера',
-        status: 0
-      };
+  async deleteTreatmentOutcome(id) {
+    try {
+      await axiosInstance.delete(`/treatments/outcome/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
     }
+  }
+
+  // Arthroplasty methods
+  async getArthroplastyForm(id) {
+    try {
+      const response = await axiosInstance.get(`/treatments/arthroplasty_form/${id}/`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getReasons() {
+    try {
+      const response = await axiosInstance.get('/treatments/reasons/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getArthroplastyForms() {
+    try {
+      const response = await axiosInstance.get('/treatments/arthroplasty_form/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getPjlTypes() {
+    try {
+      const response = await axiosInstance.get('/treatments/pjl_types/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getLocalStatuses() {
+    try {
+      const response = await axiosInstance.get('/treatments/local_statuses/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getAoriDefects() {
+    try {
+      const response = await axiosInstance.get('/treatments/aori_defects/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getTreatmentOptions() {
+    try {
+      const response = await axiosInstance.get('/treatments/treatment_options/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getArthroplastyTypes() {
+    try {
+      const response = await axiosInstance.get('/treatments/arthroplasty_form/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async createArthroplastyType(data) {
+    try {
+      const response = await axiosInstance.post('/treatments/arthroplasty_form/', data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async updateArthroplastyType(id, data) {
+    try {
+      const response = await axiosInstance.put(`/treatments/arthroplasty_form/${id}/`, data);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteArthroplastyType(id) {
+    try {
+      await axiosInstance.delete(`/treatments/arthroplasty_form/${id}/`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  handleError(error) {
+    console.error('API Error:', error);
     
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      const message = error.response.data?.message || 
-                     error.response.data?.detail || 
-                     error.response.data?.error ||
-                     'Произошла ошибка при выполнении запроса';
+      const { data, status } = error.response;
+      let message = 'Request failed';
+      let details = [];
+
+      if (typeof data === 'string') {
+        message = data;
+      } else if (data?.detail) {
+        message = data.detail;
+      } else if (data?.message) {
+        message = data.message;
+      } else if (Array.isArray(data)) {
+        message = 'Validation errors';
+        details = data;
+      } else if (typeof data === 'object') {
+        message = 'Validation errors';
+        details = Object.entries(data).map(
+          ([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`
+        );
+      }
+
       return {
         message,
-        status: error.response.status
-      };
-    } else if (error.request) {
-      // The request was made but no response was received
-      return {
-        message: 'Сервер не отвечает. Пожалуйста, попробуйте позже',
-        status: 0
-      };
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      return {
-        message: error.message || 'Произошла ошибка при отправке запроса',
-        status: -1
+        details,
+        status,
+        data
       };
     }
+
+    if (error.request) {
+      return {
+        message: 'No response from server',
+        status: 0
+      };
+    }
+
+    return {
+      message: error.message || 'Request setup failed',
+      status: -1
+    };
   }
 }
 

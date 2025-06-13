@@ -417,31 +417,31 @@ export default {
     },
 
     goToPatient() {
-      this.$router.push(`/patient/${this.patientId}`);
+      this.$router.push('/patients');
     },
 
     goToProsthesis() {
-      this.$router.push(`/patient/${this.patientId}/prosthesis`);
+      this.$router.push(`/patients/${this.patientId}/prosthesis`);
     },
 
     goToTreatment() {
-      this.$router.push(`/patient/${this.patientId}/treatment`);
+      this.$router.push(`/patients/${this.patientId}/treatment`);
     },
 
     goToMicroflora() {
-      this.$router.push(`/patient/${this.patientId}/microflora`);
+      this.$router.push(`/patients/${this.patientId}/microflora`);
     },
 
     goToOperations() {
-      this.$router.push(`/patient/${this.patientId}/operations`);
+      this.$router.push(`/patients/${this.patientId}/operations`);
     },
 
     goToAnalysis() {
-      this.$router.push(`/patient/${this.patientId}/analysis`);
+      this.$router.push(`/patients/${this.patientId}/analysis`);
     },
 
     goToOutcomes() {
-      this.$router.push(`/patient/${this.patientId}/outcomes`);
+      this.$router.push(`/patients/${this.patientId}/outcomes`);
     },
 
     goBack() {

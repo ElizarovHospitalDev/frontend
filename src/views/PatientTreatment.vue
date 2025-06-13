@@ -376,7 +376,7 @@ export default {
           authService.getProsthesisTypes(),
           authService.getProsthesisVendors(),
           authService.getProsthesisForms(),
-          authService.getArthroplastyTypes()
+          authService.getArthroplastyForms()
         ]);
         
         this.prostheses = prostheses;

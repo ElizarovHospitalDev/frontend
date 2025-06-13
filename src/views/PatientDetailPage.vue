@@ -340,6 +340,10 @@ export default {
       this.$router.push({ name: 'PatientOutcomes', params: { id: this.patientId } });
     },
     
+    goToMicroflora() {
+      this.$router.push(`/patients/${this.patientId}/microflora`);
+    },
+    
     goBack() {
       this.$router.push('/patients');
     },

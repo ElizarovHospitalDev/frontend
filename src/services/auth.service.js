@@ -694,9 +694,12 @@ class AuthService {
 
   async getArthroplastyForms() {
     try {
+      console.log('Fetching arthroplasty forms...');
       const response = await axiosInstance.get('/treatments/arthroplasty_form/');
+      console.log('Arthroplasty forms response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('Error fetching arthroplasty forms:', error);
       throw this.handleError(error);
     }
   }
@@ -731,15 +734,6 @@ class AuthService {
   async getTreatmentOptions() {
     try {
       const response = await axiosInstance.get('/treatments/treatment_options/');
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
-
-  async getArthroplastyTypes() {
-    try {
-      const response = await axiosInstance.get('/treatments/arthroplasty_form/');
       return response.data;
     } catch (error) {
       throw this.handleError(error);

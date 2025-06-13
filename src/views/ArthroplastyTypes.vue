@@ -121,7 +121,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        this.types = await authService.getArthroplastyTypes();
+        this.types = await authService.getArthroplastyForms();
       } catch (error) {
         this.handleApiError(error);
       } finally {

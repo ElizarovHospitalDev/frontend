@@ -318,6 +318,36 @@ class AuthService {
     }
   }
 
+  async patchProsthesisType(id, data) {
+    try {
+      const response = await axiosInstance.patch(`/endoprosthetics/types/${id}/`, data);
+      this.cache.prosthesisTypes = null;
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async patchProsthesisVendor(id, data) {
+    try {
+      const response = await axiosInstance.patch(`/endoprosthetics/vendors/${id}/`, data);
+      this.cache.prosthesisVendors = null;
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async patchProsthesisForm(id, data) {
+    try {
+      const response = await axiosInstance.patch(`/endoprosthetics/forms/${id}/`, data);
+      this.cache.prosthesisForms = null;
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async resolveTypeId(type) {
     if (!type) return null;
     if (typeof type === 'number') return type;

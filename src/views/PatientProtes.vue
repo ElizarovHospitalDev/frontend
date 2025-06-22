@@ -13,7 +13,7 @@
           </router-link>
           <button class="logout-btn" @click="logout">Выход</button>
         </div>
-        </div>
+      </div>
     </div>
     
     <div class="content">
@@ -38,7 +38,7 @@
           <input 
             type="text" 
             v-model="searchQuery" 
-            placeholder="Поиск по типу, производителю, партии или дате" 
+            placeholder="Поиск по виду, производителю, партии или дате" 
             class="search-input"
             @input="handleSearch"
           >
@@ -100,7 +100,7 @@
             </div>
             
             <div class="info-row">
-              <div class="info-label">Тип:</div>
+              <div class="info-label">Вид:</div>
               <div class="info-value">{{ getProsthesisTypeName(prosthesis.type) || 'Не указано' }}</div>
             </div>
             <div class="info-row">
@@ -116,7 +116,7 @@
               <div class="info-value">{{ formatDate(prosthesis.date) || 'Не указана' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Вид:</div>
+              <div class="info-label">Тип:</div>
               <div class="info-value">{{ getProsthesisFormName(prosthesis.form) || 'Не указано' }}</div>
             </div>
             <div class="info-row">
@@ -152,10 +152,36 @@
                   <button 
                     type="button" 
                     class="add-new-btn" 
-                    @click="showNewTypeInput = true"
+                    @click="editMode.type = true"
+                    v-if="!editMode.type && !editingProsthesisId"
                   >
                     + Добавить
                   </button>
+                  <button 
+                    type="button" 
+                    class="edit-btn" 
+                    @click="startEditingItem('type')"
+                    v-if="!editMode.type && editingProsthesisId"
+                  >
+                    Редактировать
+                  </button>
+                </div>
+                
+                <div v-if="editMode.type" class="edit-options">
+                  <input
+                    v-model="newTypeName"
+                    type="text"
+                    :placeholder="editingProsthesisId ? 'Редактировать название вида' : 'Новое название вида'"
+                    class="new-input"
+                  >
+                  <div class="edit-buttons">
+                    <button type="button" class="save-edit-btn" @click="editingProsthesisId ? updateType() : addNewType()">
+                      Сохранить
+                    </button>
+                    <button type="button" class="cancel-edit-btn" @click="cancelEdit('type')">
+                      Отмена
+                    </button>
+                  </div>
                 </div>
                 <input
                   v-if="showNewTypeInput"
@@ -188,21 +214,37 @@
                   <button 
                     type="button" 
                     class="add-new-btn" 
-                    @click="showNewVendorInput = true"
+                    @click="editMode.vendor = true"
+                    v-if="!editMode.vendor && !editingProsthesisId"
                   >
                     + Добавить
                   </button>
+                  <button 
+                    type="button" 
+                    class="edit-btn" 
+                    @click="startEditingItem('vendor')"
+                    v-if="!editMode.vendor && editingProsthesisId"
+                  >
+                    Редактировать
+                  </button>
                 </div>
-                <input
-                  v-if="showNewVendorInput"
-                  v-model="newVendorName"
-                  type="text"
-                  placeholder="Введите название нового производителя"
-                  class="new-input"
-                  @blur="addNewVendor"
-                  @keyup.enter="addNewVendor"
-                  required
-                >
+                
+                <div v-if="editMode.vendor" class="edit-options">
+                  <input
+                    v-model="newVendorName"
+                    type="text"
+                    :placeholder="editingProsthesisId ? 'Редактировать название производителя' : 'Новое название производителя'"
+                    class="new-input"
+                  >
+                  <div class="edit-buttons">
+                    <button type="button" class="save-edit-btn" @click="editingProsthesisId ? updateVendor() : addNewVendor()">
+                      Сохранить
+                    </button>
+                    <button type="button" class="cancel-edit-btn" @click="cancelEdit('vendor')">
+                      Отмена
+                    </button>
+                  </div>
+                </div>
               </div>
               
               <div class="form-group">
@@ -224,10 +266,36 @@
                   <button 
                     type="button" 
                     class="add-new-btn" 
-                    @click="showNewFormInput = true"
+                    @click="editMode.form = true"
+                    v-if="!editMode.form && !editingProsthesisId"
                   >
                     + Добавить
                   </button>
+                  <button 
+                    type="button" 
+                    class="edit-btn" 
+                    @click="startEditingItem('form')"
+                    v-if="!editMode.form && editingProsthesisId"
+                  >
+                    Редактировать
+                  </button>
+                </div>
+                
+                <div v-if="editMode.form" class="edit-options">
+                  <input
+                    v-model="newFormName"
+                    type="text"
+                    :placeholder="editingProsthesisId ? 'Редактировать название типа' : 'Новое название типа'"
+                    class="new-input"
+                  >
+                  <div class="edit-buttons">
+                    <button type="button" class="save-edit-btn" @click="editingProsthesisId ? updateForm() : addNewForm()">
+                      Сохранить
+                    </button>
+                    <button type="button" class="cancel-edit-btn" @click="cancelEdit('form')">
+                      Отмена
+                    </button>
+                  </div>
                 </div>
                 <input
                   v-if="showNewFormInput"
@@ -291,17 +359,19 @@ export default {
     return {
       prostheses: [],
       loading: true,
+      error: null,
       isEditing: false,
       editingProsthesisId: null,
       saving: false,
       searchQuery: '',
       
-      // Для добавления новых значений
-      showNewTypeInput: false,
+      editMode: {
+        type: false,
+        vendor: false,
+        form: false
+      },
       newTypeName: '',
-      showNewVendorInput: false,
       newVendorName: '',
-      showNewFormInput: false,
       newFormName: '',
       
       editForm: {
@@ -315,7 +385,13 @@ export default {
       },
       prosthesisTypes: [],
       prosthesisVendors: [],
-      prosthesisForms: []
+      prosthesisForms: [],
+      
+      editingItem: {
+        type: null,
+        vendor: null,
+        form: null
+      }
     };
   },
   computed: {
@@ -401,9 +477,39 @@ export default {
       return date.toLocaleDateString('ru-RU');
     },
     
+    startEditingItem(field) {
+      this.editMode[field] = true;
+      const currentId = this.editForm[field];
+      
+      if (field === 'type') {
+        const item = this.prosthesisTypes.find(t => t.id === currentId);
+        if (item) {
+          this.newTypeName = item.name;
+          this.editingItem.type = item.id;
+        }
+      } else if (field === 'vendor') {
+        const item = this.prosthesisVendors.find(v => v.id === currentId);
+        if (item) {
+          this.newVendorName = item.name;
+          this.editingItem.vendor = item.id;
+        }
+      } else if (field === 'form') {
+        const item = this.prosthesisForms.find(f => f.id === currentId);
+        if (item) {
+          this.newFormName = item.name;
+          this.editingItem.form = item.id;
+        }
+      }
+    },
+    
+    cancelEdit(field) {
+      this.editMode[field] = false;
+      this[`new${field.charAt(0).toUpperCase() + field.slice(1)}Name`] = '';
+      this.editingItem[field] = null;
+    },
+    
     async addNewType() {
       if (!this.newTypeName.trim()) {
-        this.showNewTypeInput = false;
         return;
       }
 
@@ -414,8 +520,7 @@ export default {
 
         if (existingType) {
           this.editForm.type = existingType.id;
-          this.showNewTypeInput = false;
-          this.newTypeName = '';
+          this.cancelEdit('type');
           return;
         }
 
@@ -425,18 +530,39 @@ export default {
         
         this.prosthesisTypes.push(newType);
         this.editForm.type = newType.id;
-        this.showNewTypeInput = false;
-        this.newTypeName = '';
+        this.cancelEdit('type');
+        this.showSuccessMessage('Новый вид успешно добавлен');
       } catch (error) {
-        console.error('Ошибка при добавлении нового типа:', error);
-        this.error = 'Не удалось добавить новый тип';
-        this.showNewTypeInput = false;
+        console.error('Ошибка при добавлении нового вида:', error);
+        this.showError('Не удалось добавить новый вид');
+      }
+    },
+    
+    async updateType() {
+      if (!this.newTypeName.trim() || !this.editingItem.type) {
+        return;
+      }
+
+      try {
+        const updatedType = await authService.patchProsthesisType(this.editingItem.type, { 
+          name: this.newTypeName.trim() 
+        });
+        
+        const index = this.prosthesisTypes.findIndex(t => t.id === this.editingItem.type);
+        if (index !== -1) {
+          this.prosthesisTypes.splice(index, 1, updatedType);
+        }
+        
+        this.cancelEdit('type');
+        this.showSuccessMessage('Вид успешно обновлен');
+      } catch (error) {
+        console.error('Ошибка при обновлении вида:', error);
+        this.showError('Не удалось обновить вид');
       }
     },
     
     async addNewVendor() {
       if (!this.newVendorName.trim()) {
-        this.showNewVendorInput = false;
         return;
       }
 
@@ -447,8 +573,7 @@ export default {
 
         if (existingVendor) {
           this.editForm.vendor = existingVendor.id;
-          this.showNewVendorInput = false;
-          this.newVendorName = '';
+          this.cancelEdit('vendor');
           return;
         }
 
@@ -458,18 +583,39 @@ export default {
         
         this.prosthesisVendors.push(newVendor);
         this.editForm.vendor = newVendor.id;
-        this.showNewVendorInput = false;
-        this.newVendorName = '';
+        this.cancelEdit('vendor');
+        this.showSuccessMessage('Новый производитель успешно добавлен');
       } catch (error) {
         console.error('Ошибка при добавлении нового производителя:', error);
-        this.error = 'Не удалось добавить нового производителя';
-        this.showNewVendorInput = false;
+        this.showError('Не удалось добавить нового производителя');
+      }
+    },
+    
+    async updateVendor() {
+      if (!this.newVendorName.trim() || !this.editingItem.vendor) {
+        return;
+      }
+
+      try {
+        const updatedVendor = await authService.patchProsthesisVendor(this.editingItem.vendor, { 
+          name: this.newVendorName.trim() 
+        });
+        
+        const index = this.prosthesisVendors.findIndex(v => v.id === this.editingItem.vendor);
+        if (index !== -1) {
+          this.prosthesisVendors.splice(index, 1, updatedVendor);
+        }
+        
+        this.cancelEdit('vendor');
+        this.showSuccessMessage('Производитель успешно обновлен');
+      } catch (error) {
+        console.error('Ошибка при обновлении производителя:', error);
+        this.showError('Не удалось обновить производителя');
       }
     },
     
     async addNewForm() {
       if (!this.newFormName.trim()) {
-        this.showNewFormInput = false;
         return;
       }
 
@@ -480,8 +626,7 @@ export default {
 
         if (existingForm) {
           this.editForm.form = existingForm.id;
-          this.showNewFormInput = false;
-          this.newFormName = '';
+          this.cancelEdit('form');
           return;
         }
 
@@ -491,12 +636,34 @@ export default {
         
         this.prosthesisForms.push(newForm);
         this.editForm.form = newForm.id;
-        this.showNewFormInput = false;
-        this.newFormName = '';
+        this.cancelEdit('form');
+        this.showSuccessMessage('Новый тип успешно добавлен');
       } catch (error) {
-        console.error('Ошибка при добавлении новой формы:', error);
-        this.error = 'Не удалось добавить новую форму';
-        this.showNewFormInput = false;
+        console.error('Ошибка при добавлении нового типа:', error);
+        this.showError('Не удалось добавить новый тип');
+      }
+    },
+    
+    async updateForm() {
+      if (!this.newFormName.trim() || !this.editingItem.form) {
+        return;
+      }
+
+      try {
+        const updatedForm = await authService.patchProsthesisForm(this.editingItem.form, { 
+          name: this.newFormName.trim() 
+        });
+        
+        const index = this.prosthesisForms.findIndex(f => f.id === this.editingItem.form);
+        if (index !== -1) {
+          this.prosthesisForms.splice(index, 1, updatedForm);
+        }
+        
+        this.cancelEdit('form');
+        this.showSuccessMessage('Тип успешно обновлен');
+      } catch (error) {
+        console.error('Ошибка при обновлении типа:', error);
+        this.showError('Не удалось обновить тип');
       }
     },
     
@@ -510,12 +677,9 @@ export default {
         stable: '',
         patient: this.patientId
       };
-      this.showNewTypeInput = false;
-      this.newTypeName = '';
-      this.showNewVendorInput = false;
-      this.newVendorName = '';
-      this.showNewFormInput = false;
-      this.newFormName = '';
+      this.cancelEdit('type');
+      this.cancelEdit('vendor');
+      this.cancelEdit('form');
       this.editingProsthesisId = null;
       this.isEditing = true;
     },
@@ -530,25 +694,14 @@ export default {
         stable: prosthesis.stable,
         patient: this.patientId
       };
-      this.showNewTypeInput = false;
-      this.newTypeName = '';
-      this.showNewVendorInput = false;
-      this.newVendorName = '';
-      this.showNewFormInput = false;
-      this.newFormName = '';
+      this.cancelEdit('type');
+      this.cancelEdit('vendor');
+      this.cancelEdit('form');
       this.editingProsthesisId = prosthesis.id;
       this.isEditing = true;
     },
     
     async saveChanges() {
-
-      let hasErrors = false;
-
-      
-      if (hasErrors) {
-        return;
-      }
-
       this.saving = true;
       this.error = null;
 
@@ -564,17 +717,15 @@ export default {
         };
 
         if (this.editingProsthesisId) {
-          const updated = await authService.updateProsthesis(this.editingProsthesisId, prosthesisData);
-          const index = this.prostheses.findIndex(p => p.id === this.editingProsthesisId);
-          this.prostheses.splice(index, 1, updated);
+          await authService.updateProsthesis(this.editingProsthesisId, prosthesisData);
           this.showSuccessMessage('Данные протеза успешно обновлены');
         } else {
-          const created = await authService.createProsthesis(prosthesisData);
-          this.prostheses.push(created);
-          this.showSuccessMessage('Данные протеза успешно сохранены');
+          await authService.createProsthesis(prosthesisData);
+          this.showSuccessMessage('Протез успешно добавлен');
         }
 
         this.isEditing = false;
+        this.fetchProstheses();
       } catch (error) {
         console.error('Ошибка сохранения:', error);
         this.error = error.response?.data?.message || error.message || 'Ошибка при сохранении данных';
@@ -587,14 +738,15 @@ export default {
       alert(message);
     },
     
+    showError(message) {
+      alert(message);
+    },
+    
     cancelEditing() {
       this.isEditing = false;
-      this.showNewTypeInput = false;
-      this.newTypeName = '';
-      this.showNewVendorInput = false;
-      this.newVendorName = '';
-      this.showNewFormInput = false;
-      this.newFormName = '';
+      this.cancelEdit('type');
+      this.cancelEdit('vendor');
+      this.cancelEdit('form');
     },
     
     async confirmDelete(id) {
@@ -621,16 +773,16 @@ export default {
       this.$router.push({ name: 'PatientDetail', params: { id: this.patientId } });
     },
     
-    goToProsthesis() {
-      this.$router.push({ name: 'ProsthesisInfo', params: { id: this.patientId } });
-    },
-    
     goToTreatment() {
       this.$router.push({ name: 'PatientTreatment', params: { id: this.patientId } });
     },
     
     goToComorbidPathologies() {
       this.$router.push({ name: 'PatientComorbidPathologies', params: { id: this.patientId } });
+    },
+    
+    goToMicroflora() {
+      this.$router.push({ name: 'PatientMicroflora', params: { id: this.patientId } });
     },
     
     goToOperations() {
@@ -707,7 +859,6 @@ export default {
   font-weight: normal;
 }
 
-
 .content {
   display: flex;
   flex: 1;
@@ -757,23 +908,6 @@ export default {
 
 .back-icon {
   font-size: 18px;
-}
-
-.error-message {
-  color: #ff4444;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.invalid {
-  border-color: #ff4444 !important;
-}
-
-.form-note {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 20px;
-  font-style: italic;
 }
 
 .main-content {
@@ -978,6 +1112,13 @@ export default {
   color: #333;
 }
 
+.form-note {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
 .edit-form {
   margin-top: 20px;
 }
@@ -1001,10 +1142,6 @@ export default {
   border: 1px solid #e6eec6;
   border-radius: 6px;
   font-size: 14px;
-}
-
-.form-group textarea {
-  min-height: 80px;
 }
 
 .select-container {
@@ -1035,13 +1172,43 @@ export default {
   background: #d0d9a8;
 }
 
-.new-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #e6eec6;
-  border-radius: 6px;
+.edit-options {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.save-edit-btn {
+  padding: 6px 12px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
   font-size: 14px;
-  margin-top: 8px;
+}
+
+.save-edit-btn:hover {
+  background: #7fa11e;
+}
+
+.cancel-edit-btn {
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-edit-btn:hover {
+  background: #e0e0e0;
 }
 
 .form-actions {
@@ -1059,6 +1226,23 @@ export default {
   cursor: pointer;
 }
 
+.save-btn {
+  padding: 10px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: #7fa11e;
+}
+
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
 
 .nav-link {
   display: inline-flex;
@@ -1105,23 +1289,5 @@ export default {
 .logout-btn:hover {
   background: #aa0000;
 }
-
-
-.save-btn {
-  padding: 10px 16px;
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.save-btn:hover {
-  background: #7fa11e;
-}
-
-.save-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
 </style>
+

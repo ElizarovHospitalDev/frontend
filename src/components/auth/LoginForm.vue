@@ -10,8 +10,9 @@
           type="text" 
           class="form-input"
           placeholder="Введите ваш логин"
-          v-model="login"
+          v-model="credentials.username"
           :disabled="isLoading"
+          @keyup.enter="handleLogin"
         />
       </div>
       
@@ -22,8 +23,9 @@
             :type="showPassword ? 'text' : 'password'" 
             class="form-input"
             placeholder="Введите ваш пароль"
-            v-model="password"
+            v-model="credentials.password"
             :disabled="isLoading"
+            @keyup.enter="handleLogin"
           />
           <button 
             class="toggle-password" 
@@ -41,18 +43,22 @@
         </div>
       </div>
 
-      <div v-if="error" class="error-message">{{ error }}</div>
+      <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
       
       <button 
         class="login-button" 
         @click="handleLogin"
-        :disabled="isLoading"
+        :disabled="isLoading || !isFormValid"
       >
         <span v-if="isLoading" class="loading-spinner"></span>
         <span v-else>Войти</span>
       </button>
       
-      <router-link to="/forgot-password" class="forgot-password" :class="{ 'disabled': isLoading }">
+      <router-link 
+        to="/forgot-password" 
+        class="forgot-password" 
+        :class="{ 'disabled': isLoading }"
+      >
         Забыли пароль?
       </router-link>
     </div>
@@ -60,37 +66,61 @@
 </template>
 
 <script>
-import eyeOpen from "@/assets/eye open_.svg";
-import eyeClosed from "@/assets/eye closed_.svg";
+import eyeOpen from "@/assets/eye_open.svg";
+import eyeClosed from "@/assets/eye_closed.svg";
 
 export default {
   name: "LoginForm",
-  props: {
-    isLoading: {
-      type: Boolean,
-      default: false
-    },
-    error: {
-      type: String,
-      default: ''
-    }
-  },
   data() {
     return {
       eyeOpen,
       eyeClosed,
       showPassword: false,
-      password: "",
-      login: ""
+      credentials: {
+        username: "",
+        password: ""
+      },
+      isLoading: false,
+      errorMessage: ""
     };
+  },
+  computed: {
+    isFormValid() {
+      return this.credentials.username.trim() && this.credentials.password.trim();
+    }
   },
   methods: {
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword;
     },
-    handleLogin() {
-      if (this.isLoading) return;
-      this.$emit('login', { username: this.login, password: this.password });
+    async handleLogin() {
+      if (this.isLoading || !this.isFormValid) return;
+      
+      this.isLoading = true;
+      this.errorMessage = "";
+
+      try {
+        await this.$store.dispatch("auth/login", this.credentials);
+        // Перенаправление на страницу пациентов после успешного входа
+        this.$router.push("/patients");
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+    getErrorMessage(error) {
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            return "Неверный логин или пароль";
+          case 500:
+            return "Ошибка сервера. Попробуйте позже";
+          default:
+            return error.response.data?.message || "Ошибка при входе";
+        }
+      }
+      return "Нет соединения с сервером";
     }
   }
 };
@@ -101,6 +131,7 @@ export default {
   width: 100%;
   display: flex;
   justify-content: center;
+  padding: 20px;
 }
 
 .form-container {
@@ -188,9 +219,10 @@ export default {
 
 .error-message {
   color: #ff0000;
-  font-size: 14px;
+  font-size: 16px;
   margin: -20px 0 20px;
   text-align: center;
+  min-height: 20px;
 }
 
 .login-button {
@@ -220,6 +252,7 @@ export default {
   background-color: #cccccc;
   cursor: not-allowed;
   box-shadow: none;
+  opacity: 0.7;
 }
 
 .loading-spinner {
@@ -291,4 +324,4 @@ export default {
     font-size: 24px;
   }
 }
-</style> 
+</style>

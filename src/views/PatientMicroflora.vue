@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+        </div>
     </div>
     
     <div class="content">
@@ -29,19 +37,16 @@
         <div class="search-bar">
           <input 
             type="text" 
-            v-model="searchQuery" 
             placeholder="Поиск по микрофлоре" 
             class="search-input"
-            @input="handleSearch"
           >
           <button 
-            v-if="searchQuery" 
             @click="clearSearch" 
             class="clear-search-btn"
           >
             ×
           </button>
-          <button class="search-btn" @click="handleSearch">
+          <button class="search-btn" >
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#666"/>
             </svg>
@@ -69,7 +74,7 @@
           <div v-else>
             <div v-for="(microflora, index) in microfloraData" :key="microflora.id" class="microflora-item">
               <div class="microflora-header">
-                <h3>Микрофлора #{{ index + 1 }}</h3>
+                <h3>Микрофлора №{{ index + 1 }}</h3>
                 <div class="microflora-actions">
                   <button class="edit-btn" @click="startEditing(microflora)">
                     <svg width="16" height="16" viewBox="0 0 24 24">
@@ -180,7 +185,6 @@
 <script>
 import { mapActions } from 'vuex';
 import authService from '@/services/auth.service';
-import debounce from 'lodash/debounce';
 
 export default {
   name: 'PatientMicroflora',
@@ -200,7 +204,6 @@ export default {
       error: null,
       isEditing: false,
       editingMicrofloraId: null,
-      searchQuery: '',
       editForm: {
         microorganism: '',
         mrse_mrsa: false,
@@ -211,15 +214,7 @@ export default {
       }
     };
   },
-  computed: {
-    formNamesMap() {
-      if (!this.arthroplastyForms || this.arthroplastyForms.length === 0) return {};
-      return this.arthroplastyForms.reduce((map, form) => {
-        map[form.id] = form.name;
-        return map;
-      }, {});
-    }
-  },
+
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
     
@@ -415,12 +410,8 @@ export default {
       this.isEditing = false;
     },
     
-    handleSearch: debounce(function() {
-    }, 300),
+  
     
-    clearSearch() {
-      this.searchQuery = '';
-    },
     
     goToPatient() {
       this.$router.push({ name: 'PatientDetail', params: { id: this.patientId } });
@@ -490,29 +481,6 @@ export default {
         this.loading = false;
       }
     },
-
-    handleMicroorganismChange(value) {
-      console.log('Microorganism changed to:', value);
-      this.editForm.microorganism = value;
-      // Сбрасываем все флаги
-      this.editForm.mrse_mrsa = false;
-      this.editForm.pseudomonas_aeruginosa = false;
-      this.editForm.klebsiella_pneumoniae = false;
-      this.editForm.acinetobacter_baumanii = false;
-      
-      // Устанавливаем соответствующий флаг
-      if (value === 'mrse_mrsa') {
-        this.editForm.mrse_mrsa = true;
-      } else if (value === 'pseudomonas_aeruginosa') {
-        this.editForm.pseudomonas_aeruginosa = true;
-      } else if (value === 'klebsiella_pneumoniae') {
-        this.editForm.klebsiella_pneumoniae = true;
-      } else if (value === 'acinetobacter_baumanii') {
-        this.editForm.acinetobacter_baumanii = true;
-      }
-      
-      console.log('Form after microorganism change:', this.editForm);
-    }
   },
   
   async created() {
@@ -566,15 +534,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
 .content {
   display: flex;
@@ -731,10 +690,11 @@ export default {
 
 .microflora-item {
   background: white;
+  border: 1px solid #e6eec6;
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
 }
 
 .microflora-header {
@@ -921,5 +881,51 @@ export default {
 .save-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
 }
 </style>

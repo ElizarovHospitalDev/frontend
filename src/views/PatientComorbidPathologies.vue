@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+        </div>
     </div>
     
     <div class="content">
@@ -74,7 +82,7 @@
             class="pathology-item"
           >
             <div class="pathology-header">
-              <h3>Коморбидные патологии #{{ index + 1 }}</h3>
+              <h3>Коморбидные патологии №{{ index + 1 }}</h3>
               <div class="pathology-actions">
                 <button class="edit-btn" @click="startEditing(pathology)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
@@ -205,7 +213,6 @@
 <script>
 import { mapActions } from 'vuex';
 import authService from '@/services/auth.service';
-import debounce from 'lodash/debounce';
 
 export default {
   name: 'PatientComorbidPathologies',
@@ -408,9 +415,7 @@ export default {
       };
     },
 
-    handleSearch: debounce(function() {
-      // Поиск уже реализован через computed свойство filteredPathologies
-    }, 300),
+   
 
     clearSearch() {
       this.searchQuery = '';
@@ -517,15 +522,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
 .content {
   display: flex;
@@ -817,5 +813,51 @@ export default {
   border: 1px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
 }
 </style>

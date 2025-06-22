@@ -42,19 +42,19 @@ export default {
   margin: 0;
 }
 .logout-button {
+  padding: 8px 16px;
   background: #9ac531;
-  color: #fff;
+  color: white;
   border: none;
-  border-radius: 16px;
-  padding: 8px 24px;
-  font-size: 18px;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
-  margin-left: 24px;
 }
+
 .logout-button:hover {
-  background: #7fa11e;
+  background: #aa0000;
 }
 @media (max-width: 600px) {
   .dashboard-header {

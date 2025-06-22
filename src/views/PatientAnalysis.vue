@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+        </div>
     </div>
     
     <div class="content">
@@ -74,7 +82,7 @@
             class="analysis-item"
           >
             <div class="analysis-header">
-              <h3>Анализы #{{ index + 1 }}</h3>
+              <h3>Анализы №{{ index + 1 }}</h3>
               <div class="analysis-actions">
                 <button class="edit-btn" @click="startEditing(analysis)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
@@ -109,35 +117,40 @@
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingAnalysisId ? 'Редактирование анализов' : 'Добавление анализов' }}</h2>
-            
+            <div class="form-note">
+              Поля, отмеченные звездочкой (*), обязательны для заполнения
+            </div>
             <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-group">
-                <label for="KAK">КАК</label>
+                <label for="KAK">КАК *</label>
                 <input 
                   id="KAK" 
                   v-model="editForm.KAK" 
                   type="text" 
                   placeholder="Введите данные КАК"
+                  required
                 >
               </div>
               
               <div class="form-group">
-                <label for="VKAK">ВКАК</label>
+                <label for="VKAK">ВКАК *</label>
                 <input 
                   id="VKAK" 
                   v-model="editForm.VKAK" 
                   type="text" 
                   placeholder="Введите данные ВКАК"
+                  required
                 >
               </div>
               
               <div class="form-group">
-                <label for="urine_test">Анализ мочи</label>
+                <label for="urine_test">Анализ мочи *</label>
                 <input 
                   id="urine_test" 
                   v-model="editForm.urine_test" 
                   type="text" 
                   placeholder="Введите данные анализа мочи"
+                  required
                 >
               </div>
               
@@ -418,15 +431,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
 .content {
   display: flex;
@@ -580,6 +584,7 @@ export default {
   border: 1px solid #e6eec6;
   border-radius: 8px;
   padding: 20px;
+  margin-bottom: 20px;
 }
 
 .analysis-header {
@@ -741,5 +746,51 @@ export default {
 .save-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
 }
 </style>

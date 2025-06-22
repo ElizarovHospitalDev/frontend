@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+        </div>
     </div>
     
     <div class="content">
@@ -74,7 +82,7 @@
             class="prosthesis-item"
           >
             <div class="prosthesis-header">
-              <h3>Протез #{{ index + 1 }}</h3>
+              <h3>Протез №{{ index + 1 }}</h3>
               <div class="prosthesis-actions">
                 <button class="edit-btn" @click="startEditing(prosthesis)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
@@ -92,7 +100,7 @@
             </div>
             
             <div class="info-row">
-              <div class="info-label">Вид:</div>
+              <div class="info-label">Тип:</div>
               <div class="info-value">{{ getProsthesisTypeName(prosthesis.type) || 'Не указано' }}</div>
             </div>
             <div class="info-row">
@@ -108,7 +116,7 @@
               <div class="info-value">{{ formatDate(prosthesis.date) || 'Не указана' }}</div>
             </div>
             <div class="info-row">
-              <div class="info-label">Форма:</div>
+              <div class="info-label">Вид:</div>
               <div class="info-value">{{ getProsthesisFormName(prosthesis.form) || 'Не указано' }}</div>
             </div>
             <div class="info-row">
@@ -121,56 +129,130 @@
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingProsthesisId ? 'Редактирование протеза' : 'Добавление нового протеза' }}</h2>
-            
+            <div class="form-note">
+              Поля, отмеченные звездочкой (*), обязательны для заполнения
+            </div>
             <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-group">
-                <label for="type">Вид эндопротеза *</label>
-                <select id="type" v-model="editForm.type" required>
-                  <option value="" disabled>Выберите вид</option>
-                  <option v-for="type in prosthesisTypes" 
-                          :key="type.id" 
-                          :value="type.id">
-                    {{ type.name }}
-                  </option>
-                </select>
+                <label for="type">Тип эндопротеза *</label>
+                <div class="select-container">
+                  <select 
+                    id="type" 
+                    v-model="editForm.type" 
+                    class="form-select"
+                    required
+                  >
+                    <option value="" disabled>Выберите тип</option>
+                    <option v-for="type in prosthesisTypes" 
+                            :key="type.id" 
+                            :value="type.id">
+                      {{ type.name }}
+                    </option>
+                  </select>
+                  <button 
+                    type="button" 
+                    class="add-new-btn" 
+                    @click="showNewTypeInput = true"
+                  >
+                    + Добавить
+                  </button>
+                </div>
+                <input
+                  v-if="showNewTypeInput"
+                  v-model="newTypeName"
+                  type="text"
+                  placeholder="Введите название нового типа"
+                  class="new-input"
+                  @blur="addNewType"
+                  @keyup.enter="addNewType"
+                  required
+                >
               </div>
               
               <div class="form-group">
-                <label for="vendor">Производитель</label>
-                <select id="vendor" v-model="editForm.vendor">
-                  <option value="" disabled>Выберите производителя</option>
-                  <option v-for="vendor in prosthesisVendors" 
-                          :key="vendor.id" 
-                          :value="vendor.id">
-                    {{ vendor.name }}
-                  </option>
-                </select>
+                <label for="vendor">Производитель эндопротеза*</label>
+                <div class="select-container">
+                  <select 
+                    id="vendor" 
+                    v-model="editForm.vendor" 
+                    class="form-select"
+                    required
+                  >
+                    <option value="" disabled>Выберите производителя</option>
+                    <option v-for="vendor in prosthesisVendors" 
+                            :key="vendor.id" 
+                            :value="vendor.id">
+                      {{ vendor.name }}
+                    </option>
+                  </select>
+                  <button 
+                    type="button" 
+                    class="add-new-btn" 
+                    @click="showNewVendorInput = true"
+                  >
+                    + Добавить
+                  </button>
+                </div>
+                <input
+                  v-if="showNewVendorInput"
+                  v-model="newVendorName"
+                  type="text"
+                  placeholder="Введите название нового производителя"
+                  class="new-input"
+                  @blur="addNewVendor"
+                  @keyup.enter="addNewVendor"
+                  required
+                >
               </div>
               
               <div class="form-group">
-                <label for="batch">Партия</label>
-                <input id="batch" v-model="editForm.batch" type="text" placeholder="Введите номер партии">
+                <label for="form">Вид эндопротеза *</label>
+                <div class="select-container">
+                  <select 
+                    id="form" 
+                    v-model="editForm.form" 
+                    class="form-select"
+                    required
+                  >
+                    <option value="" disabled>Выберите вид</option>
+                    <option v-for="form in prosthesisForms" 
+                            :key="form.id" 
+                            :value="form.id">
+                      {{ form.name }}
+                    </option>
+                  </select>
+                  <button 
+                    type="button" 
+                    class="add-new-btn" 
+                    @click="showNewFormInput = true"
+                  >
+                    + Добавить
+                  </button>
+                </div>
+                <input
+                  v-if="showNewFormInput"
+                  v-model="newFormName"
+                  type="text"
+                  placeholder="Введите название нового вида"
+                  class="new-input"
+                  @blur="addNewForm"
+                  @keyup.enter="addNewForm"
+                  required
+                >
               </div>
               
               <div class="form-group">
-                <label for="date">Дата установки *</label>
+                <label for="batch">Партия эндопротеза *</label>
+                <input id="batch" v-model="editForm.batch" type="text" placeholder="Введите номер партии" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="date">Дата установки эндопротеза *</label>
                 <input id="date" v-model="editForm.date" type="date" required>
               </div>
               
               <div class="form-group">
-                <label for="form">Форма</label>
-                <select id="form" v-model="editForm.form">
-                  <option value="" disabled>Выберите форму</option>
-                  <option v-for="form in prosthesisForms" 
-                          :key="form.id" 
-                          :value="form.id">
-                    {{ form.name }}
-                  </option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label for="stable">Стабильность *</label>
+                <label for="stable">Стабильность эндопротеза *</label>
                 <select id="stable" v-model="editForm.stable" required>
                   <option value="" disabled>Выберите стабильность</option>
                   <option :value="true">Стабилен</option>
@@ -209,11 +291,19 @@ export default {
     return {
       prostheses: [],
       loading: true,
-      error: null,
       isEditing: false,
       editingProsthesisId: null,
       saving: false,
       searchQuery: '',
+      
+      // Для добавления новых значений
+      showNewTypeInput: false,
+      newTypeName: '',
+      showNewVendorInput: false,
+      newVendorName: '',
+      showNewFormInput: false,
+      newFormName: '',
+      
       editForm: {
         type: '',
         vendor: '',
@@ -311,6 +401,105 @@ export default {
       return date.toLocaleDateString('ru-RU');
     },
     
+    async addNewType() {
+      if (!this.newTypeName.trim()) {
+        this.showNewTypeInput = false;
+        return;
+      }
+
+      try {
+        const existingType = this.prosthesisTypes.find(
+          type => type.name.toLowerCase() === this.newTypeName.trim().toLowerCase()
+        );
+
+        if (existingType) {
+          this.editForm.type = existingType.id;
+          this.showNewTypeInput = false;
+          this.newTypeName = '';
+          return;
+        }
+
+        const newType = await authService.createProsthesisType({ 
+          name: this.newTypeName.trim() 
+        });
+        
+        this.prosthesisTypes.push(newType);
+        this.editForm.type = newType.id;
+        this.showNewTypeInput = false;
+        this.newTypeName = '';
+      } catch (error) {
+        console.error('Ошибка при добавлении нового типа:', error);
+        this.error = 'Не удалось добавить новый тип';
+        this.showNewTypeInput = false;
+      }
+    },
+    
+    async addNewVendor() {
+      if (!this.newVendorName.trim()) {
+        this.showNewVendorInput = false;
+        return;
+      }
+
+      try {
+        const existingVendor = this.prosthesisVendors.find(
+          vendor => vendor.name.toLowerCase() === this.newVendorName.trim().toLowerCase()
+        );
+
+        if (existingVendor) {
+          this.editForm.vendor = existingVendor.id;
+          this.showNewVendorInput = false;
+          this.newVendorName = '';
+          return;
+        }
+
+        const newVendor = await authService.createProsthesisVendor({ 
+          name: this.newVendorName.trim() 
+        });
+        
+        this.prosthesisVendors.push(newVendor);
+        this.editForm.vendor = newVendor.id;
+        this.showNewVendorInput = false;
+        this.newVendorName = '';
+      } catch (error) {
+        console.error('Ошибка при добавлении нового производителя:', error);
+        this.error = 'Не удалось добавить нового производителя';
+        this.showNewVendorInput = false;
+      }
+    },
+    
+    async addNewForm() {
+      if (!this.newFormName.trim()) {
+        this.showNewFormInput = false;
+        return;
+      }
+
+      try {
+        const existingForm = this.prosthesisForms.find(
+          form => form.name.toLowerCase() === this.newFormName.trim().toLowerCase()
+        );
+
+        if (existingForm) {
+          this.editForm.form = existingForm.id;
+          this.showNewFormInput = false;
+          this.newFormName = '';
+          return;
+        }
+
+        const newForm = await authService.createProsthesisForm({ 
+          name: this.newFormName.trim() 
+        });
+        
+        this.prosthesisForms.push(newForm);
+        this.editForm.form = newForm.id;
+        this.showNewFormInput = false;
+        this.newFormName = '';
+      } catch (error) {
+        console.error('Ошибка при добавлении новой формы:', error);
+        this.error = 'Не удалось добавить новую форму';
+        this.showNewFormInput = false;
+      }
+    },
+    
     startAdding() {
       this.editForm = {
         type: '',
@@ -321,6 +510,12 @@ export default {
         stable: '',
         patient: this.patientId
       };
+      this.showNewTypeInput = false;
+      this.newTypeName = '';
+      this.showNewVendorInput = false;
+      this.newVendorName = '';
+      this.showNewFormInput = false;
+      this.newFormName = '';
       this.editingProsthesisId = null;
       this.isEditing = true;
     },
@@ -335,13 +530,22 @@ export default {
         stable: prosthesis.stable,
         patient: this.patientId
       };
+      this.showNewTypeInput = false;
+      this.newTypeName = '';
+      this.showNewVendorInput = false;
+      this.newVendorName = '';
+      this.showNewFormInput = false;
+      this.newFormName = '';
       this.editingProsthesisId = prosthesis.id;
       this.isEditing = true;
     },
     
     async saveChanges() {
-      if (!this.editForm.type || !this.editForm.date || this.editForm.stable === '') {
-        this.error = 'Заполните все обязательные поля (Тип, Дата установки, Стабильность)';
+
+      let hasErrors = false;
+
+      
+      if (hasErrors) {
         return;
       }
 
@@ -351,10 +555,10 @@ export default {
       try {
         const prosthesisData = {
           type: this.editForm.type,
-          vendor: this.editForm.vendor || null,
-          batch: this.editForm.batch || null,
+          vendor: this.editForm.vendor,
+          batch: this.editForm.batch,
           date: this.editForm.date,
-          form: this.editForm.form || null,
+          form: this.editForm.form,
           stable: Boolean(this.editForm.stable),
           patient: this.patientId
         };
@@ -385,6 +589,12 @@ export default {
     
     cancelEditing() {
       this.isEditing = false;
+      this.showNewTypeInput = false;
+      this.newTypeName = '';
+      this.showNewVendorInput = false;
+      this.newVendorName = '';
+      this.showNewFormInput = false;
+      this.newFormName = '';
     },
     
     async confirmDelete(id) {
@@ -482,7 +692,7 @@ export default {
 .header-content {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 25px;
 }
 
 .logo {
@@ -497,15 +707,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
 .content {
   display: flex;
@@ -556,6 +757,23 @@ export default {
 
 .back-icon {
   font-size: 18px;
+}
+
+.error-message {
+  color: #ff4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.invalid {
+  border-color: #ff4444 !important;
+}
+
+.form-note {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+  font-style: italic;
 }
 
 .main-content {
@@ -789,6 +1007,43 @@ export default {
   min-height: 80px;
 }
 
+.select-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.form-select {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #e6eec6;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.add-new-btn {
+  padding: 10px 12px;
+  background: #e6eec6;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.add-new-btn:hover {
+  background: #d0d9a8;
+}
+
+.new-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e6eec6;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
@@ -803,6 +1058,54 @@ export default {
   border-radius: 6px;
   cursor: pointer;
 }
+
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
+}
+
 
 .save-btn {
   padding: 10px 16px;

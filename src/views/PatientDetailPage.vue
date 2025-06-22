@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+        </div>
     </div>
     
     <div class="content">
@@ -26,27 +34,7 @@
       </div>
       
       <div class="main-content">
-        <div class="search-bar">
-          <input 
-            type="text" 
-            placeholder="Поиск по пациенту" 
-            class="search-input"
-            v-model="searchQuery"
-            @input="handleSearch"
-          >
-          <button 
-            v-if="searchQuery" 
-            @click="clearSearch" 
-            class="clear-search-btn"
-          >
-            ×
-          </button>
-          <button class="search-btn" @click="handleSearch">
-            <svg width="20" height="20" viewBox="0 0 24 24">
-              <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#666"/>
-            </svg>
-          </button>
-        </div>
+        
         
         <div class="patient-info-container">
           <div v-if="loading" class="loading">Загрузка данных пациента...</div>
@@ -87,14 +75,16 @@
                 <div class="info-label">Телефон:</div>
                 <div class="info-value">{{ formatPhone(patient.mobile_phone) }}</div>
               </div>
-              <div class="info-row">
-                <div class="info-label">Пол:</div>
-                <div class="info-value">{{ patient.sex === 'M' ? 'Мужской' : 'Женский' }}</div>
-              </div>
               <div class="info-row" v-if="patient.address">
                 <div class="info-label">Адрес:</div>
                 <div class="info-value">{{ patient.address }}</div>
               </div>
+              <div class="info-row">
+                <div class="info-label">Пол:</div>
+                <div class="info-value">{{ patient.sex === 'M' ? 'Мужской' : 'Женский' }}</div>
+              </div>
+              
+              
             </div>
             
             <form v-else @submit.prevent="saveChanges" class="edit-form">
@@ -180,12 +170,13 @@
               </div>
               
               <div class="form-group">
-                <label for="address">Адрес</label>
+                <label for="address">Адрес *</label>
                 <textarea 
                   id="address"
                   v-model="editForm.address"
                   placeholder="Введите адрес"
                   rows="3"
+                  required
                 ></textarea>
               </div>
               
@@ -285,6 +276,10 @@ export default {
     
     async saveChanges() {
       this.saving = true;
+      let hasErrors = false;
+      if (hasErrors) {
+        return;
+      }
       try {
         const formattedData = {
           first_name: this.editForm.first_name,
@@ -432,15 +427,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
 .content {
   display: flex;
@@ -498,49 +484,18 @@ export default {
   padding: 20px;
 }
 
-.search-bar {
-  display: flex;
-  margin-bottom: 20px;
-  border: 1px solid #e6eec6;
-  border-radius: 8px;
-  overflow: hidden;
-  position: relative;
-}
 
-.search-input {
-  flex: 1;
-  padding: 10px 16px;
-  padding-right: 40px;
-  border: none;
-  outline: none;
-  font-size: 16px;
-}
 
-.clear-search-btn {
-  position: absolute;
-  right: 50px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
-  font-size: 18px;
-  padding: 0 8px;
-}
 
-.search-btn {
-  background: none;
-  border: none;
-  padding: 0 16px;
-  cursor: pointer;
-}
+
+
+
 
 .patient-info-container {
   border: 1px solid #e6eec6;
   border-radius: 8px;
   padding: 20px;
-  min-height: 400px;
+  min-height: 200px;
 }
 
 .loading, .error {
@@ -731,5 +686,51 @@ export default {
 .save-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
 }
 </style>

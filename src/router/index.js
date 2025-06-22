@@ -11,13 +11,17 @@ import PatientOperations from '@/views/PatientOperations.vue';
 import PatientAnalysis from '@/views/PatientAnalysis.vue';
 import PatientOutcomes from '@/views/PatientOutcomes.vue';
 import PatientTreatment from '@/views/PatientTreatment.vue';
-import ArthroplastyTypes from '@/views/ArthroplastyTypes.vue';
 
 const routes = [
   {
     path: '/',
-    name: 'Login',
-    component: LoginPage
+    redirect: '/login' // Перенаправление с корня на /login
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: LoginPage,
+    meta: { requiresAuth: false }
   },
   {
     path: '/forgot-password',
@@ -91,12 +95,6 @@ const routes = [
     component: PatientTreatment,
     meta: { requiresAuth: true },
     props: route => ({ patientId: route.params.id })
- },
- {
-    path: '/arthroplasty-types',
-    name: 'ArthroplastyTypes',
-    component: ArthroplastyTypes,
-    meta: { requiresAuth: true }
  }
 ];
 

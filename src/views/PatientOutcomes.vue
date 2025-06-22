@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+      </div>
     </div>
     
     <div class="content">
@@ -74,7 +82,7 @@
             class="outcome-item"
           >
             <div class="outcome-header">
-              <h3>Итоги лечения #{{ index + 1 }}</h3>
+              <h3>Итоги лечения №{{ index + 1 }}</h3>
               <div class="outcome-actions">
                 <button class="edit-btn" @click="startEditing(outcome)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
@@ -465,16 +473,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
 .content {
   display: flex;
   flex: 1;
@@ -573,7 +571,7 @@ export default {
   margin-bottom: 30px;
 }
 
-.add-btn, .edit-btn {
+.add-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -587,7 +585,7 @@ export default {
   transition: background 0.2s;
 }
 
-.add-btn:hover, .edit-btn:hover {
+.add-btn:hover {
   background: #7fa11e;
 }
 
@@ -616,10 +614,64 @@ export default {
   margin-bottom: 20px;
 }
 
-.outcomes-info {
+.outcome-item {
   border: 1px solid #e6eec6;
   border-radius: 8px;
   padding: 20px;
+  margin-bottom: 20px;
+}
+
+.outcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.outcome-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.outcome-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.edit-btn:hover {
+  background: #7fa11e;
+}
+
+.delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.delete-btn:hover {
+  background: #cc0000;
 }
 
 .info-row {
@@ -727,5 +779,51 @@ export default {
 .save-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
 }
 </style>

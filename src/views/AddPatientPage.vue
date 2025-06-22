@@ -102,11 +102,12 @@
       </div>
 
       <div class="form-group">
-        <label for="address">Адрес</label>
+        <label for="address">Адрес *</label>
         <textarea 
           id="address"
           v-model="form.address"
           placeholder="Введите адрес"
+          required
           rows="3"
         ></textarea>
       </div>

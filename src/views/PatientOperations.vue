@@ -5,7 +5,15 @@
         <img src="@/assets/2025-03-10_18-35-17-picaai-Photoroom-1.png" alt="Logo" class="logo">
         <h1>ЦИФРОВОЙ РЕГИСТР ПАЦИЕНТОВ ЦЕНТРА ИЛИЗАРОВА</h1>
       </div>
-      <button class="logout-btn" @click="logout">Выход</button>
+      <div class="nav-links">
+        <div class="nav-items">
+          <router-link to="/patients" class="nav-link">
+            <i class="fas fa-users"></i>
+            Пациенты
+          </router-link>
+          <button class="logout-btn" @click="logout">Выход</button>
+        </div>
+        </div>
     </div>
     
     <div class="content">
@@ -32,7 +40,6 @@
             v-model="searchQuery" 
             placeholder="Поиск по дате операции или характеру раны" 
             class="search-input"
-            @input="handleSearch"
           >
           <button 
             v-if="searchQuery" 
@@ -41,20 +48,30 @@
           >
             ×
           </button>
-          <button class="search-btn" @click="handleSearch">
+          <button class="search-btn" >
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#666"/>
             </svg>
           </button>
         </div>
         
+
+
+
         <div class="operations-actions">
-          <button class="add-btn" @click="startAdding">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-            </svg>
+          <button 
+            class="add-btn"
+            @click="startAdding"
+          >
             Добавить операцию
           </button>
+
+          <div v-if="showCreateTreatmentBtn" class="alert alert-warning mt-3">
+            <p>Лечение не найдено</p>
+            <button @click="goToTreatment" class="btn-create-treatment">
+              Создать лечение
+            </button>
+          </div>
         </div>
         
         <div v-if="loading" class="loading">Загрузка данных об операциях...</div>
@@ -74,7 +91,7 @@
             class="operation-item"
           >
             <div class="operation-header">
-              <h3>Операция #{{ index + 1 }}</h3>
+              <h3>Операция №{{ index + 1 }}</h3>
               <div class="operation-actions">
                 <button class="edit-btn" @click="startEditing(operation)">
                   <svg width="16" height="16" viewBox="0 0 24 24">
@@ -101,11 +118,11 @@
                   <div class="info-value">{{ formatDate(operation.operation_date) || 'Не указана' }}</div>
                 </div>
                 <div class="info-row">
-                  <div class="info-label">Длительность (мин):</div>
-                  <div class="info-value">{{ operation.duration_stage1 || 'Не указана' }}</div>
+                  <div class="info-label">Длительность(мин):</div>
+                  <div class="info-value">{{operation.duration_stage1 || 'Не указана' }}</div>
                 </div>
                 <div class="info-row">
-                  <div class="info-label">Кровопотеря (мл):</div>
+                  <div class="info-label">Кровопотеря(мл):</div>
                   <div class="info-value">{{ operation.blood_loss_stage1 || 'Не указана' }}</div>
                 </div>
               </div>
@@ -117,11 +134,11 @@
                   <div class="info-value">{{ formatDate(operation.operation_date_stage2) || 'Не указана' }}</div>
                 </div>
                 <div class="info-row">
-                  <div class="info-label">Длительность (мин):</div>
+                  <div class="info-label">Длительность(мин):</div>
                   <div class="info-value">{{ operation.duration_stage2 || 'Не указана' }}</div>
                 </div>
                 <div class="info-row">
-                  <div class="info-label">Кровопотеря (мл):</div>
+                  <div class="info-label">Кровопотеря(мл):</div>
                   <div class="info-value">{{ operation.blood_loss_stage2 || 'Не указана' }}</div>
                 </div>
               </div>
@@ -147,7 +164,9 @@
         <div v-if="isEditing" class="modal-overlay">
           <div class="modal-content">
             <h2>{{ editingOperationId ? 'Редактирование операции' : 'Добавление операции' }}</h2>
-            
+            <div class="form-note">
+              Поля, отмеченные звездочкой (*), обязательны для заполнения
+            </div>
             <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-section">
                 <h4>1) Операция I этап</h4>
@@ -162,7 +181,7 @@
                 </div>
                 
                 <div class="form-group">
-                  <label for="duration_stage1">Длительность (минут) *</label>
+                  <label for="duration_stage1">Длительность(минут) *</label>
                   <input 
                     id="duration_stage1" 
                     v-model="editForm.duration_stage1" 
@@ -174,7 +193,7 @@
                 </div>
                 
                 <div class="form-group">
-                  <label for="blood_loss_stage1">Кровопотеря (мл) *</label>
+                  <label for="blood_loss_stage1">Кровопотеря(мл) *</label>
                   <input 
                     id="blood_loss_stage1" 
                     v-model="editForm.blood_loss_stage1" 
@@ -198,7 +217,7 @@
                 </div>
                 
                 <div class="form-group">
-                  <label for="duration_stage2">Длительность (минут)</label>
+                  <label for="duration_stage2">Длительность(минут)</label>
                   <input 
                     id="duration_stage2" 
                     v-model="editForm.duration_stage2" 
@@ -209,7 +228,7 @@
                 </div>
                 
                 <div class="form-group">
-                  <label for="blood_loss_stage2">Кровопотеря (мл)</label>
+                  <label for="blood_loss_stage2">Кровопотеря(мл)</label>
                   <input 
                     id="blood_loss_stage2" 
                     v-model="editForm.blood_loss_stage2" 
@@ -223,22 +242,24 @@
               <div class="form-section">
                 <h4>Общие данные</h4>
                 <div class="form-group">
-                  <label for="wound_character">Характер раны</label>
+                  <label for="wound_character">Характер раны *</label>
                   <input 
                     id="wound_character" 
                     v-model="editForm.wound_character" 
                     type="text" 
                     placeholder="Введите характер раны"
+                    required
                   >
                 </div>
                 
                 <div class="form-group">
-                  <label for="drainage">Дренирование</label>
+                  <label for="drainage">Дренирование *</label>
                   <input 
                     id="drainage" 
                     v-model="editForm.drainage" 
                     type="text" 
                     placeholder="Введите информацию о дренировании"
+                    required
                   >
                 </div>
                 
@@ -270,7 +291,6 @@
 <script>
 import { mapActions } from 'vuex';
 import authService from '@/services/auth.service';
-import debounce from 'lodash/debounce';
 
 export default {
   name: 'PatientOperations',
@@ -282,6 +302,7 @@ export default {
   },
   data() {
     return {
+      showCreateTreatmentBtn: false,
       operations: [],
       loading: true,
       error: null,
@@ -306,6 +327,7 @@ export default {
     };
   },
   computed: {
+
     filteredOperations() {
       if (!this.searchQuery) return this.operations;
       
@@ -326,16 +348,22 @@ export default {
     
     async fetchOperationStages() {
       try {
-        const stages = await authService.getOperationStages();
-        this.operationStages = stages;
-        if (stages.length > 0) {
-          this.editForm.operation_stage = stages[0].id;
+        const response = await authService.getOperationStages();
+        if (response && response.length > 0) {
+          this.operationStages = response;
+          this.editForm.operation_stage = response[0].id; // Устанавливаем первый этап по умолчанию
+        } else {  
+          console.error('Список этапов операций пуст');
+          this.error = 'Не удалось загрузить этапы операций';
         }
       } catch (error) {
         console.error('Ошибка загрузки этапов операции:', error);
+        this.error = 'Ошибка при загрузке этапов операций';
       }
     },
-    
+
+
+
     async fetchTreatmentId() {
       try {
         const treatments = await authService.getTreatments();
@@ -381,22 +409,45 @@ export default {
       return new Date(dateString).toLocaleDateString('ru-RU');
     },
     
-    startAdding() {
-      this.editForm = {
-        treatment: this.editForm.treatment,
-        operation_stage: this.operationStages.length > 0 ? this.operationStages[0].id : null,
-        operation_date: '',
-        operation_date_stage2: '',
-        duration_stage1: '',
-        duration_stage2: '',
-        blood_loss_stage1: '',
-        blood_loss_stage2: '',
-        wound_character: '',
-        drainage: '',
-        complications: ''
-      };
-      this.editingOperationId = null;
-      this.isEditing = true;
+  
+    async startAdding() {
+      try {
+        console.log('2. Получаем treatmentId');
+        const treatmentId = await this.fetchTreatmentId();
+
+        if (!treatmentId) {
+          this.error = 'Для добавления операции сначала создайте лечение';
+          this.showCreateTreatmentBtn = true; // Показываем кнопку создания
+          return;
+        }
+
+        // Проверяем наличие этапов операций
+        if (this.operationStages.length === 0) {
+          this.error = 'Нет доступных этапов операций';
+          return;
+        }
+
+        this.editForm = {
+          treatment: treatmentId,
+          operation_stage: this.operationStages[0].id,
+          operation_date: '',
+          operation_date_stage2: '',
+          duration_stage1: '',
+          duration_stage2: '',
+          blood_loss_stage1: '',
+          blood_loss_stage2: '',
+          wound_character: '',
+          drainage: '',
+          complications: ''
+        };
+
+        this.editingOperationId = null;
+        this.isEditing = true;
+
+      } catch (error) {
+        console.error('Ошибка при создании операции:', error);
+        this.error = 'Не удалось начать создание операции';
+        }
     },
     
     startEditing(operation) {
@@ -418,13 +469,25 @@ export default {
     },
     
     async saveChanges() {
-      if (!this.editForm.operation_date || !this.editForm.duration_stage1 || !this.editForm.blood_loss_stage1) {
-        this.error = 'Заполните все обязательные поля для I этапа операции (Дата, Длительность, Кровопотеря)';
+      // Проверка обязательных полей
+      if (!this.editForm.treatment) {
+        this.error = 'Не найдено активное лечение для этого пациента. Сначала создайте лечение.';
         return;
       }
 
-      if (!this.editForm.treatment || !this.editForm.operation_stage) {
-        this.error = 'Отсутствуют обязательные данные (ID лечения или этапа операции)';
+      if (!this.editForm.operation_stage) {
+        this.error = 'Не выбран этап операции. Пожалуйста, выберите этап.';
+        return;
+      }
+
+      // Преобразуем числовые значения
+      const duration1 = parseInt(this.editForm.duration_stage1) || 0;
+      const bloodLoss1 = parseInt(this.editForm.blood_loss_stage1) || 0;
+      const duration2 = parseInt(this.editForm.duration_stage2) || null;
+      const bloodLoss2 = parseInt(this.editForm.blood_loss_stage2) || null;
+
+      if (!this.editForm.operation_date || !this.editForm.duration_stage1 || !this.editForm.blood_loss_stage1) {
+        this.error = 'Заполните все обязательные поля для I этапа операции (Дата, Длительность, Кровопотеря)';
         return;
       }
 
@@ -437,14 +500,16 @@ export default {
           operation_stage: this.editForm.operation_stage,
           operation_date: this.editForm.operation_date,
           operation_date_stage2: this.editForm.operation_date_stage2 || null,
-          duration_stage1: this.editForm.duration_stage1,
-          duration_stage2: this.editForm.duration_stage2 || null,
-          blood_loss_stage1: this.editForm.blood_loss_stage1,
-          blood_loss_stage2: this.editForm.blood_loss_stage2 || null,
+          duration_stage1: duration1,
+          duration_stage2: duration2,
+          blood_loss_stage1: bloodLoss1,
+          blood_loss_stage2: bloodLoss2,
           wound_character: this.editForm.wound_character || null,
           drainage: this.editForm.drainage || null,
           complications: this.editForm.complications || null
         };
+
+        console.log('Отправляемые данные:', operationData); // Для отладки
 
         if (this.editingOperationId) {
           const updated = await authService.updateSurgicalIntervention(this.editingOperationId, operationData);
@@ -487,8 +552,6 @@ export default {
       }
     },
     
-    handleSearch: debounce(function() {
-    }, 300),
     
     clearSearch() {
       this.searchQuery = '';
@@ -503,7 +566,11 @@ export default {
     },
     
     goToTreatment() {
-      this.$router.push({ name: 'PatientTreatment', params: { id: this.patientId } });
+      this.$router.push({
+        name: 'PatientTreatment',
+        params: { id: this.patientId },
+        query: { from: 'operations' }
+      });
     },
     
     goToComorbidPathologies() {
@@ -537,6 +604,17 @@ export default {
     }
   },
   async created() {
+
+    await this.fetchOperationStages();
+    console.log('Загруженные этапы операций:', this.operationStages); // Для отладки
+
+    // Проверяем, вернулись ли мы после создания лечения
+    if (this.$route.query.from === 'treatment') {
+      await this.fetchTreatmentId(); // Обновляем данные о лечении
+      this.showCreateTreatmentBtn = false; // Скрываем кнопку
+    }
+  
+    // Загружаем остальные данные
     await this.fetchOperationStages();
     await this.fetchTreatmentId();
     await this.fetchOperations();
@@ -589,15 +667,6 @@ export default {
   font-weight: normal;
 }
 
-.logout-btn {
-  background: #9ac531;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-weight: 600;
-}
 
 .content {
   display: flex;
@@ -697,6 +766,27 @@ export default {
   margin-bottom: 30px;
 }
 
+.stage-section, .common-section {
+  margin-bottom: 10px; 
+}
+
+
+.info-section h4 {
+  margin: 30px 0 20px 0; 
+  font-size: 18px;
+}
+
+.stage-section h5 {
+  margin: 20px 0 15px 0; 
+  font-size: 15px;
+}
+
+.form-section h4 {
+  margin: 20px 0 20px 0; 
+  color: #333;
+  font-size: 16px;
+}
+
 .add-btn {
   display: flex;
   align-items: center;
@@ -749,8 +839,8 @@ export default {
 
 .operation-item {
   border: 1px solid #e6eec6;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 25px;
 }
 
 .operation-header {
@@ -763,11 +853,11 @@ export default {
 .operation-header h3 {
   margin: 0;
   color: #333;
+  font-size: 20px; /* Увеличили размер шрифта */
 }
 
 .operation-actions {
   display: flex;
-  gap: 10px;
   margin: 0;
 }
 
@@ -809,11 +899,11 @@ export default {
 
 .info-row {
   display: flex;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .info-label {
-  width: 150px;
+  width: 140px;
   font-weight: 600;
   color: #666;
 }
@@ -858,23 +948,40 @@ export default {
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 600;
   color: #333;
+}
+
+.btn-create-treatment {
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.alert {
+  padding: 15px;
+  background: #fff8e6;
+  border-radius: 8px;
+  margin-top: 15px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #e6eec6;
-  border-radius: 6px;
+  border-radius: 12px;
   font-size: 14px;
 }
 
@@ -913,5 +1020,51 @@ export default {
 .save-btn:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #7fa11e;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.logout-btn {
+  padding: 8px 16px;
+  background: #9ac531;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #aa0000;
 }
 </style>

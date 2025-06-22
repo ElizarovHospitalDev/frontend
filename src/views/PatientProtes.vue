@@ -134,7 +134,7 @@
             </div>
             <form @submit.prevent="saveChanges" class="edit-form">
               <div class="form-group">
-                <label for="type">Тип эндопротеза *</label>
+                <label for="type">Вид эндопротеза *</label>
                 <div class="select-container">
                   <select 
                     id="type" 
@@ -142,7 +142,7 @@
                     class="form-select"
                     required
                   >
-                    <option value="" disabled>Выберите тип</option>
+                    <option value="" disabled>Выберите вид</option>
                     <option v-for="type in prosthesisTypes" 
                             :key="type.id" 
                             :value="type.id">
@@ -161,7 +161,7 @@
                   v-if="showNewTypeInput"
                   v-model="newTypeName"
                   type="text"
-                  placeholder="Введите название нового типа"
+                  placeholder="Введите название нового вида"
                   class="new-input"
                   @blur="addNewType"
                   @keyup.enter="addNewType"
@@ -206,7 +206,7 @@
               </div>
               
               <div class="form-group">
-                <label for="form">Вид эндопротеза *</label>
+                <label for="form">Тип эндопротеза *</label>
                 <div class="select-container">
                   <select 
                     id="form" 
@@ -214,7 +214,7 @@
                     class="form-select"
                     required
                   >
-                    <option value="" disabled>Выберите вид</option>
+                    <option value="" disabled>Выберите тип</option>
                     <option v-for="form in prosthesisForms" 
                             :key="form.id" 
                             :value="form.id">
@@ -233,7 +233,7 @@
                   v-if="showNewFormInput"
                   v-model="newFormName"
                   type="text"
-                  placeholder="Введите название нового вида"
+                  placeholder="Введите название нового типа"
                   class="new-input"
                   @blur="addNewForm"
                   @keyup.enter="addNewForm"

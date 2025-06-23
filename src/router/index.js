@@ -11,10 +11,6 @@ import PatientOperations from '@/views/PatientOperations.vue';
 import PatientAnalysis from '@/views/PatientAnalysis.vue';
 import PatientOutcomes from '@/views/PatientOutcomes.vue';
 import PatientTreatment from '@/views/PatientTreatment.vue';
-<<<<<<< HEAD
-=======
-import ArthroplastyTypes from '@/views/ArthroplastyTypes.vue';
->>>>>>> 304615248066b0f4d89806620f35da712b7d2ea2
 
 const routes = [
   {

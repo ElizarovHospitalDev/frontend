@@ -76,7 +76,6 @@ class AuthService {
     }
   }
 
-
   async refreshToken(refreshToken) {
     try {
       const response = await axiosInstance.post('/users/token/refresh/', {

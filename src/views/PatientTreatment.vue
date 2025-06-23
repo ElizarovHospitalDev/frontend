@@ -579,7 +579,6 @@ export default {
   padding: 10px 20px;
   background-color: #f8f8f8;
   border-bottom: 1px solid #e6eec6;
-
 }
 
 .header-content {
@@ -599,7 +598,6 @@ export default {
   margin: 0;
   font-weight: normal;
 }
-
 
 .content {
   display: flex;

@@ -410,9 +410,6 @@ export default {
       this.isEditing = false;
     },
     
-  
-    
-    
     goToPatient() {
       this.$router.push({ name: 'PatientDetail', params: { id: this.patientId } });
     },
@@ -533,7 +530,6 @@ export default {
   margin: 0;
   font-weight: normal;
 }
-
 
 .content {
   display: flex;

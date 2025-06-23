@@ -484,13 +484,6 @@ export default {
   padding: 20px;
 }
 
-
-
-
-
-
-
-
 .patient-info-container {
   border: 1px solid #e6eec6;
   border-radius: 8px;

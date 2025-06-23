@@ -54,9 +54,6 @@
             </svg>
           </button>
         </div>
-        
-
-
 
         <div class="operations-actions">
           <button 
@@ -327,7 +324,6 @@ export default {
     };
   },
   computed: {
-
     filteredOperations() {
       if (!this.searchQuery) return this.operations;
       

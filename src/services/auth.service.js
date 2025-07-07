@@ -81,7 +81,10 @@ class AuthService {
       const response = await axiosInstance.post('/users/token/refresh/', {
         refresh: refreshToken
       });
-      return response.data.access;
+      return {
+        access: response.data.access,
+        refresh: refreshToken
+      };
     } catch (error) {
       throw this.handleError(error);
     }

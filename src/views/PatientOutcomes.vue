@@ -113,7 +113,7 @@
             </div>
             <div class="info-row">
               <div class="info-label">Исход:</div>
-              <div class="info-value">{{ outcome.outcome || 'Не указано' }}</div>
+              <div class="info-value">{{ formatOutcome(outcome.outcome) }}</div>
             </div>
           </div>
         </div>
@@ -245,6 +245,11 @@ export default {
   },
   methods: {
     ...mapActions('auth', { logoutAction: 'logout' }),
+    formatOutcome(value) {
+      if (!value) return 'Не указано';
+      if (value === 'ВСЕ ОК') return 'Лечение прошло успешно';
+      return value;
+    },
     
     async fetchTreatmentId() {
       try {

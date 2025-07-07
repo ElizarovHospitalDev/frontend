@@ -4,9 +4,8 @@
       <div class="content-wrapper">
         <AppHeader />
         <LoginForm 
-          @login="handleLogin" 
+          @login="handleLogin"
           :isLoading="isLoading"
-          :error="errorMessage"
         />
       </div>
     </div>
@@ -26,7 +25,6 @@ export default {
   },
   data() {
     return {
-      errorMessage: '',
       timeoutDuration: 3000 // 3 seconds timeout
     };
   },
@@ -39,58 +37,21 @@ export default {
   methods: {
     ...mapActions('auth', ['login']),
     async handleLogin(credentials) {
-      console.log('Login attempt started:', { credentials });
-      
-      if (this.isLoading) {
-        console.log('Login already in progress, ignoring request');
-        return;
-      }
-      
-      this.errorMessage = '';
-      
+      if (this.isLoading) return;
       try {
-        console.log('Creating timeout promise');
-        // Create a timeout promise
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => {
-            console.log('Timeout reached');
-            reject(new Error('Превышено время ожидания ответа от сервера'));
+            reject(new Error('timeout'));
           }, this.timeoutDuration);
         });
-
-        console.log('Starting login request');
-        // Race between login and timeout
-        const result = await Promise.race([
+        await Promise.race([
           this.login(credentials),
           timeoutPromise
         ]);
-        
-        console.log('Login successful:', result);
-        // Обновляем путь с /dashboard на /patients
         this.$router.push('/patients');
       } catch (error) {
-        console.error('Login error details:', {
-          error,
-          message: error.message,
-          response: error.response,
-          status: error.response?.status
-        });
-        this.errorMessage = this.getErrorMessage(error);
+        // Ошибки теперь обрабатываются только в LoginForm.vue
       }
-    },
-    getErrorMessage(error) {
-      console.log('Processing error message:', error);
-      
-      if (error.message.includes('timeout')) {
-        return 'Сервер не отвечает. Пожалуйста, попробуйте позже.';
-      }
-      if (error.response?.status === 401) {
-        return 'Неверный логин или пароль';
-      }
-      if (error.response?.status === 0) {
-        return 'Нет соединения с сервером. Проверьте подключение к интернету.';
-      }
-      return error.message || 'Произошла ошибка при входе. Пожалуйста, попробуйте снова.';
     }
   }
 };

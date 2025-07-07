@@ -110,17 +110,23 @@ export default {
       }
     },
     getErrorMessage(error) {
-      if (error.response) {
-        switch (error.response.status) {
-          case 401:
-            return "Неверный логин или пароль";
-          case 500:
-            return "Ошибка сервера. Попробуйте позже";
-          default:
-            return error.response.data?.message || "Ошибка при входе";
-        }
+      console.log('getErrorMessage error:', error);
+      if (error.message === 'timeout') {
+        return 'Сервер не отвечает. Пожалуйста, попробуйте позже.';
       }
-      return "Нет соединения с сервером";
+      if (error.response) {
+        if (error.response.status === 401) {
+          return 'Введен неверный логин или пароль';
+        }
+        if (error.response.status === 0) {
+          return 'Нет соединения с сервером';
+        }
+        return error.response.data?.message || error.response.data?.detail || 'Ошибка при входе';
+      }
+      if (error.status === 401) {
+        return 'Введен неверный логин или пароль';
+      }
+      return 'Нет соединения с сервером';
     }
   }
 };

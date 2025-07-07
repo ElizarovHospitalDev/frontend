@@ -243,6 +243,29 @@ export default {
       // Форматирование телефона в читаемый вид
       return phone.replace(/(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})/, '+$1 ($2) $3-$4-$5');
     },
+
+    formatPhoneInput(value) {
+      // Удаляем все нецифровые символы
+      let numbers = value.replace(/\D/g, '');
+      if (!numbers.startsWith('7')) {
+        numbers = '7' + numbers;
+      }
+      numbers = numbers.slice(0, 11); // максимум 11 цифр
+      let formatted = '+7';
+      if (numbers.length > 1) {
+        formatted += ' (' + numbers.slice(1, 4);
+      }
+      if (numbers.length >= 4) {
+        formatted += ') ' + numbers.slice(4, 7);
+      }
+      if (numbers.length >= 7) {
+        formatted += '-' + numbers.slice(7, 9);
+      }
+      if (numbers.length >= 9) {
+        formatted += '-' + numbers.slice(9, 11);
+      }
+      return formatted;
+    },
     
     async fetchPatientDetails() {
       this.loading = true;
@@ -387,6 +410,16 @@ export default {
           this.fetchPatientDetails();
         }
       }
+    },
+    'editForm.mobile_phone': {
+      handler(value) {
+        if (!value) return;
+        const formatted = this.formatPhoneInput(value);
+        if (formatted !== value) {
+          this.editForm.mobile_phone = formatted;
+        }
+      },
+      immediate: false
     }
   }
 };
